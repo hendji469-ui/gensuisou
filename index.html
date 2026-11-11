@@ -109,6 +109,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
 @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
 .vh{position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;overflow:hidden}
+.zn{margin-top:8px;padding:8px 10px;border-radius:12px;background:rgba(127,127,127,.09);font-size:14px}.zn.ok{background:rgba(47,174,130,.13)}.zn.todo{background:rgba(240,138,93,.13)}.zt{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);margin-bottom:2px}.zx{color:var(--mut);font-size:13.5px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
 </style>
 </head>
 <body>
@@ -331,11 +332,12 @@ function render(){
   const sl=H[selDay]||[];const isToday=sameDay(dSel,new Date());
   const cards=sl.map(([cl,a,b],j)=>{const done=ENTRIES.filter(e=>e.classe===cl&&sameDay(new Date(e.ts),dSel)).sort((x,y)=>y.ts-x.ts)[0];
     const e=done||last(cl,dSel.getTime());const r=REP[cl];
-    const d0=new Date(dSel);d0.setHours(0,0,0,0);const sm=ENTRIES.filter(x=>x.classe===cl&&x.ts<d0.getTime()&&new Date(x.ts).getDay()===selDay&&(!e||x.id!==e.id)).sort((x,y)=>y.ts-x.ts)[0];const on=isToday&&nowM()>=mins(a)-20&&nowM()<=mins(b);
+    const d0=new Date(dSel);d0.setHours(0,0,0,0);const pv=last(cl,d0.getTime());const sm=ENTRIES.filter(x=>x.classe===cl&&x.ts<d0.getTime()&&new Date(x.ts).getDay()===selDay&&(!pv||x.id!==pv.id)).sort((x,y)=>y.ts-x.ts)[0];const on=isToday&&nowM()>=mins(a)-20&&nowM()<=mins(b);
     return `<div class="slot ${on?'now':''}" style="--c:${color(cl)};animation-delay:${j*0.05}s" data-cl="${esc(cl)}">${done?'<div class="badge">✓ noté</div>':(isToday&&nowM()>mins(b)-5?'<div class="badge" style="background:#f08a5d">✏️ à noter</div>':'')}${e&&e.photo?`<img class="thumb" src="${blob(e.photo)}" alt="">`:''}
       <div class="t"><div class="time">${esc(a)} – ${esc(b)}</div><div class="cl"><span class="emo">${esc(emo(cl))}</span>${esc(cl)}</div>
-      ${e?`<div class="r">${done?'Arrêté à':'Reprendre'} : <b>${esc(e.cours)}${done?(e.diapo?' · '+esc(e.diapo):''):(nextStep(e)?' · '+nextStep(e):'')}</b></div><div class="n">${done?'Noté '+fmt(e.ts):'<b>La dernière fois</b> ('+fmt(e.ts).split(' · ')[0]+') : arrêté à '+esc(e.cours)+(e.diapo?' · '+(isNum(e.diapo)?'diapo ':'')+esc(e.diapo):'')}${e.note?'<br>📝 '+esc(e.note):''}</div>`:'<div class="r" style="color:var(--mut)">Aucune entrée</div>'}
-      ${sm?`<div class="n" style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)"><b>Même jour, la fois d’avant</b> (${fmt(sm.ts).split(' · ')[0]}) : ${esc(sm.cours)}${sm.diapo?' · '+(isNum(sm.diapo)?'diapo ':'')+esc(sm.diapo):''}${sm.note?'<br>📝 '+esc(sm.note):''}</div>`:''}
+      ${pv&&!done?`<div class="r">Reprendre : <b>${esc(pv.cours)}${nextStep(pv)?' · '+nextStep(pv):''}</b></div>`:(done?'':'<div class="r" style="color:var(--mut)">Aucune entrée</div>')}
+      ${pv?`<div class="zn"><div class="zt">⏮ La dernière fois · ${fmt(pv.ts).split(' · ')[0]}</div><div><b>${esc(pv.cours)}${pv.diapo?' · '+(isNum(pv.diapo)?'diapo ':'')+esc(pv.diapo):''}</b></div>${pv.note?'<div class="zx">📝 '+esc(pv.note)+'</div>':''}${sm?`<div class="zx" style="margin-top:5px"><b>Même jour, la fois d’avant</b> (${fmt(sm.ts).split(' · ')[0]}) : ${esc(sm.cours)}${sm.diapo?' · '+(isNum(sm.diapo)?'diapo ':'')+esc(sm.diapo):''}${sm.note?' — '+esc(sm.note):''}</div>`:''}</div>`:''}
+      <div class="zn ${done?'ok':'todo'}"><div class="zt">${done?'✅ Ce cours-ci · arrêté à':'✏️ Ce cours-ci'}</div>${done?`<div><b>${esc(done.cours)}${done.diapo?' · '+(isNum(done.diapo)?'diapo ':'')+esc(done.diapo):''}</b></div>${done.note?'<div class="zx">📝 '+esc(done.note)+'</div>':''}`:`<button class="btn sm" data-add="${esc(cl)}" style="margin-top:4px">Noter où je me suis arrêté</button>`}</div>
       ${e&&docFor(e.cours)&&isNum(e.diapo)?`<button class="btn sm" style="margin-top:8px" data-open="${esc(e.cours)}|${done?Number(e.diapo):Number(e.diapo)+1}">▶ Ouvrir le cours à la diapo ${done?Number(e.diapo):Number(e.diapo)+1}</button>`:''}
       ${r&&r.texte?`<div class="rep">💡 ${esc(r.texte)}</div>`:''}</div></div>`}).join('');
   $('#main').innerHTML=`<div class="week"><button class="arr" id="wPrev">‹</button><div class="days">${days}</div><button class="arr" id="wNext">›</button></div>
@@ -344,6 +346,7 @@ function render(){
   const qi=$('#q');qi.oninput=()=>{Q=qi.value;search()};search();
   document.querySelectorAll('#main [data-cl]').forEach(el=>el.onclick=()=>openDet(el.dataset.cl));
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const [c,p]=b.dataset.open.split('|');viewDoc(docFor(c),+p,'view')});
+  document.querySelectorAll('#main [data-add]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();openAdd(b.dataset.add)});
   document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{selDay=+b.dataset.day;render()});
   $('#wPrev').onclick=()=>{weekOff--;render()};$('#wNext').onclick=()=>{weekOff++;render()};
 }

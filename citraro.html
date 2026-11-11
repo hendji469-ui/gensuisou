@@ -119,6 +119,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <div class="date" id="today"></div>
   <div class="next" id="next" style="display:none"></div>
 </div>
+<button class="btn" id="btnWeek" style="display:block;width:calc(100% - 24px);max-width:676px;margin:10px auto 0">🗓 Ma semaine et tous mes cours</button>
 <div class="sync" id="sync"></div>
 <div id="state" class="hint"></div>
 <div id="main"></div>
@@ -385,7 +386,17 @@ function openEdit(id){const e=ENTRIES.find(x=>x.id===id);if(!e)return;openAdd(e.
 function openAdd(cl){EDITID=null;$('#save').textContent='Enregistrer';if(!classes().length){openSet(CFG||{classes:[],horaire:{}});return}
   sel.classe=cl||guessClass();$('#note').value='';prefill();{const d=new Date();$('#dcours').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}photoBlob=null;audioFile=null;
   $('#prev').style.display='none';$('#btnOcr').style.display='none';$('#audPrev').style.display='none';$('#readHint').textContent='';$('#msg').textContent='';drawChips();updDocBox();openSheet('#sheetAdd')}
-function close(s){$(s).classList.remove('on');if(s==='#sheetSet'){const p=$('#pick');if(p)p.style.display='none';try{render()}catch(e){}}}
+function close(s){$(s).classList.remove('on');if(s==='#sheetDet'){const p=$('#sheetDet .panel');if(p)p.style.maxWidth=''}if(s==='#sheetSet'){const p=$('#pick');if(p)p.style.display='none';try{render()}catch(e){}}}
+function openWeek(){const J=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi'];const d1=e=>e?new Date(e.ts).toLocaleDateString('fr-CH',{day:'numeric',month:'short'}):'';
+  const line=e=>e?`<b>${esc(e.cours||'')}</b>${e.diapo?' · diapo '+esc(e.diapo):''} <span style="color:var(--mut)">(${d1(e)})</span>${e.note?`<div class="zx">${esc(e.note)}</div>`:''}`:'<span style="color:var(--mut)">rien de noté</span>';
+  let h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">';
+  for(let d=1;d<=5;d++){const sl=((CFG&&CFG.horaire&&CFG.horaire[d])||[]).slice().sort((a,b)=>a[1]<b[1]?-1:1);
+    h+=`<div class="set" style="padding:10px"><div class="zt">${J[d]}</div>`+(sl.length?sl.map(s=>`<div class="zn" data-wk="${esc(s[0])}" style="cursor:pointer"><div><span style="color:${color(s[0])}">●</span> <b>${esc(s[0])}</b> <span style="color:var(--mut)">${esc(s[1])}–${esc(s[2]||'')}</span></div><div style="margin-top:3px">${line(last(s[0]))}</div></div>`).join(''):'<div class="zx">Pas de cours</div>')+'</div>'}
+  h+='</div><h3 style="margin-top:16px">Tous mes cours, classe par classe</h3>';
+  for(const c of classes()){const by={};ENTRIES.filter(e=>e.classe===c.id).sort((a,b)=>a.ts-b.ts).forEach(e=>{by[e.cours||'']=e});const L=Object.values(by).sort((a,b)=>b.ts-a.ts);
+    h+=`<div class="set" style="padding:10px;margin-top:8px"><div><span style="color:${color(c.id)}">●</span> <b>${esc(c.id)}</b></div>`+(L.length?L.map(e=>`<div class="zn">${line(e)}</div>`).join(''):'<div class="zx">Rien de noté pour cette classe.</div>')+'</div>'}
+  $('#detTitle').textContent='Ma semaine et tous mes cours';$('#detBody').innerHTML=h;$('#sheetDet .panel').style.maxWidth='1250px';$('#sheetDet').classList.add('on')}
+$('#btnWeek').onclick=()=>{if(CFG)openWeek()};
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const sh=b.closest('.sheet');if(sh.id==='sheetAdd'&&typeof srOn!=='undefined'&&srOn){try{sr.stop()}catch(e){}srStop()}close('#'+sh.id)});
 $('#fab').onclick=()=>openAdd();
 $('#cours').oninput=()=>{drawChips();updDocBox()};

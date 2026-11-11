@@ -456,8 +456,9 @@ function drawGrid(){
   document.querySelectorAll('[data-g]').forEach(td=>td.onclick=()=>{const [d,i]=td.dataset.g.split(',').map(Number);
     if(BR===null){pickCell(d,i);return}
     G[d][i]=(G[d][i]===BR?'':BR);drawGrid()});
+  if(window.KEEPPER)return;
   $('#perEdit').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+EDIT.periodes.map((p,i)=>`<label style="margin:0;display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px"><span style="width:26px;text-align:right;color:var(--mut);font-weight:800">${i+1}</span><input type="time" data-per="${i}" value="${esc(p)}" style="flex:1;min-width:0"></label>`).join('')+'</div><div class="hint" style="margin-top:6px">Durée d’un cours : <input type="number" id="perDur" min="30" max="120" value="'+(EDIT.duree||DUR)+'" style="width:70px;display:inline-block;padding:6px 8px"> minutes</div><div class="row" style="margin-top:8px"><button class="btn sm" id="perAdd" style="flex:1">＋ Une période de plus</button><button class="btn sm" id="perDel" style="flex:1">− Enlever la dernière</button></div>';
-  document.querySelectorAll('[data-per]').forEach(el=>el.onchange=()=>{if(el.value){EDIT.periodes[+el.dataset.per]=el.value;drawGrid()}});
+  document.querySelectorAll('[data-per]').forEach(el=>el.oninput=el.onchange=()=>{if(el.value){EDIT.periodes[+el.dataset.per]=el.value;window.KEEPPER=1;try{drawGrid()}finally{window.KEEPPER=0}}});
   $('#perDur').onchange=()=>{const v=+$('#perDur').value;if(v>=30&&v<=120)EDIT.duree=v};
   $('#perAdd').onclick=()=>{const l=EDIT.periodes[EDIT.periodes.length-1];EDIT.periodes.push(hm(Math.min(1380,mins(l)+50)));for(let d=1;d<=5;d++)G[d].push('');drawGrid()};
   $('#perDel').onclick=()=>{if(EDIT.periodes.length>1){EDIT.periodes.pop();for(let d=1;d<=5;d++)G[d].pop();drawGrid()}};

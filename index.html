@@ -136,7 +136,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <div class="row" style="margin-top:8px"><button class="btn sm" id="btnOcr" style="display:none">🔍 Lire le texte de la photo</button></div>
   <div class="hint" id="readHint"></div>
   <label>Cours ou leçon</label><div class="chips" id="chipsCours"></div>
-  <input id="cours" placeholder="ou tapez le nom du cours" style="margin-top:8px" autocomplete="off">
+  <input id="cours" placeholder="déjà rempli : modifiez seulement si besoin" style="margin-top:8px" autocomplete="off">
   <label>Dernière diapo ou étape</label>
   <input id="diapo" placeholder="ex. 74, ou « exercice 3 »" autocomplete="off">
   <div id="docBox" style="display:none;margin-top:8px">
@@ -374,7 +374,7 @@ function drawChips(){
   document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{$('#cours').value=b.dataset.k;drawChips();saveDraft();updDocBox()});
 }
 function updDocBox(){const d=docFor($('#cours').value);$('#docBox').style.display=d?'':'none';$('#docRes').innerHTML='';$('#docQ').value=''}
-function prefill(){const e=last(sel.classe);$('#cours').value=e?e.cours:'';$('#diapo').value='';
+function prefill(){const e=last(sel.classe);$('#cours').value=e&&e.cours?e.cours:(sel.classe||'');$('#diapo').value='';
   try{const d=JSON.parse(localStorage.getItem('cs_draft')||'null');if(d&&d.classe===sel.classe&&Date.now()-d.t<6*3600e3){if(d.cours)$('#cours').value=d.cours;$('#diapo').value=d.diapo||'';if(d.note)$('#note').value=d.note}}catch(e){}}
 function saveDraft(){try{localStorage.setItem('cs_draft',JSON.stringify({classe:sel.classe,cours:$('#cours').value,diapo:$('#diapo').value,note:$('#note').value,t:Date.now()}))}catch(e){}}
 ['#cours','#diapo','#note'].forEach(k=>document.querySelector(k).addEventListener('input',()=>saveDraft()));
@@ -440,7 +440,7 @@ function celebrate(){const t=$('#toast');t.classList.add('on');setTimeout(()=>t.
 
 $('#save').onclick=async()=>{if(typeof srOn!=='undefined'&&srOn){try{sr.stop()}catch(e){}srStop()}
   if(!col){$('#msg').textContent='Connexion en cours, réessayez dans un instant.';return}
-  const cours=$('#cours').value.trim();if(!cours){$('#msg').textContent='Choisissez le cours.';return}
+  const cours=$('#cours').value.trim()||sel.classe||'';if(!cours){$('#msg').textContent='Choisissez le cours.';return}
   const F={classe:sel.classe,cours,diapo:$('#diapo').value.trim(),note:$('#note').value.trim(),pb:photoBlob,af:audioFile,date:$('#dcours').value};
   if(F.af&&F.af.size>20*1024*1024){$('#msg').textContent='Le mémo vocal dépasse 20 Mo : raccourcissez-le.';return}
   $('#save').disabled=true;$('#msg').textContent='Enregistrement…';let warn='';

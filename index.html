@@ -207,10 +207,10 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
 <script>
 const JOURS=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
 const PAL=['#d5001c','#e8a200','#2d6cdf','#1f9d6b','#8e44ad','#e2632a','#0f8a9d','#c2185b','#5c6bc0','#7cb342','#795548','#00897b'];
-const L4='DIP 08, DIP 09, DIP 10, LP 04, LP 05, LP 06',L2='09 Don d’organes, 10 Responsabilité civile, 10B Sans faute et mineur, Grandir à Genève';
+const L4='DIP 08, DIP 09, DIP 10, DIP 11, DIP 12, LP 04, LP 05, LP 06, LP 07, LP 08, Préah Vihéar',L2='09 Don d’organes, 10 Responsabilité civile, 10B Sans faute et mineur, 11 Trois arrêts, Grandir à Genève';
 const MODELE={classes:[{id:'4DROS01',cours:L4},{id:'4DROS02',cours:L4},{id:'4DROS03',cours:L4},{id:'4DROS04',cours:L4},
  {id:'2DROS01',cours:L2},{id:'2DROS02',cours:L2},{id:'2DROS03',cours:L2},{id:'2DROS04',cours:L2},
- {id:'1DRDF07',cours:'05 Proposer n’est pas adopter, 06 Genève et le droit de signer, 08 Personnalité juridique, Voter à 16 ans'}],
+ {id:'1DRDF07',cours:'05 Proposer n’est pas adopter, 06 Genève et le droit de signer, 08 Personnalité juridique, 09 Exercice des droits civils, 10 Capacité partielle des mineurs, Voter à 16 ans'}],
  horaire:{1:[['4DROS01','08:00','09:35'],['4DROS02','09:55','11:30'],['4DROS03','11:35','12:20']],
   2:[['2DROS01','08:00','09:35'],['2DROS02','09:55','11:30'],['4DROS04','11:35','12:20']],3:[['1DRDF07','08:00','09:35']],
   4:[['4DROS03','08:00','09:35'],['4DROS04','09:55','11:30'],['4DROS01','11:35','12:20']],
@@ -571,6 +571,9 @@ $('#importFile').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=
   col=localCol;assets=localAssets;
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
   await reload();
+  if(window.SEED&&!CFG){try{const S=window.SEED;await IDB.tx('docs','readwrite',o=>o.put(Object.assign({id:'cfg',type:'cfg',periodes:PER0.slice(),ts:Date.now()},S.cfg)));
+    let i=0;for(const e of S.entrees){i++;await IDB.tx('docs','readwrite',o=>o.put(Object.assign({id:'e'+(Date.now()-100000+i)+'_seed'+i,type:'entree',auteur:S.cfg.nom,photo:null,audio:null},e)))}
+    await reload()}catch(e){}}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!(document.activeElement&&document.activeElement.id==='q'))render()});
   setInterval(()=>{if(document.activeElement&&document.activeElement.id==='q')return;render()},60000);
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});

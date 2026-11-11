@@ -331,10 +331,12 @@ function render(){
   const dSel=new Date(mon);dSel.setDate(mon.getDate()+selDay-1);dSel.setHours(23,59,0,0);
   const sl=H[selDay]||[];const isToday=sameDay(dSel,new Date());
   const cards=sl.map(([cl,a,b],j)=>{const done=ENTRIES.filter(e=>e.classe===cl&&sameDay(new Date(e.ts),dSel)).sort((x,y)=>y.ts-x.ts)[0];
-    const e=done||last(cl,dSel.getTime());const r=REP[cl];const on=isToday&&nowM()>=mins(a)-20&&nowM()<=mins(b);
+    const e=done||last(cl,dSel.getTime());const r=REP[cl];
+    const d0=new Date(dSel);d0.setHours(0,0,0,0);const sm=ENTRIES.filter(x=>x.classe===cl&&x.ts<d0.getTime()&&new Date(x.ts).getDay()===selDay&&(!e||x.id!==e.id)).sort((x,y)=>y.ts-x.ts)[0];const on=isToday&&nowM()>=mins(a)-20&&nowM()<=mins(b);
     return `<div class="slot ${on?'now':''}" style="--c:${color(cl)};animation-delay:${j*0.05}s" data-cl="${esc(cl)}">${done?'<div class="badge">✓ noté</div>':(isToday&&nowM()>mins(b)-5?'<div class="badge" style="background:#f08a5d">✏️ à noter</div>':'')}${e&&e.photo?`<img class="thumb" src="${blob(e.photo)}" alt="">`:''}
       <div class="t"><div class="time">${esc(a)} – ${esc(b)}</div><div class="cl"><span class="emo">${esc(emo(cl))}</span>${esc(cl)}</div>
       ${e?`<div class="r">${done?'Arrêté à':'Reprendre'} : <b>${esc(e.cours)}${done?(e.diapo?' · '+esc(e.diapo):''):(nextStep(e)?' · '+nextStep(e):'')}</b></div><div class="n">${done?'Noté '+fmt(e.ts):'<b>La dernière fois</b> ('+fmt(e.ts).split(' · ')[0]+') : arrêté à '+esc(e.cours)+(e.diapo?' · '+(isNum(e.diapo)?'diapo ':'')+esc(e.diapo):'')}${e.note?'<br>📝 '+esc(e.note):''}</div>`:'<div class="r" style="color:var(--mut)">Aucune entrée</div>'}
+      ${sm?`<div class="n" style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)"><b>Même jour, la fois d’avant</b> (${fmt(sm.ts).split(' · ')[0]}) : ${esc(sm.cours)}${sm.diapo?' · '+(isNum(sm.diapo)?'diapo ':'')+esc(sm.diapo):''}${sm.note?'<br>📝 '+esc(sm.note):''}</div>`:''}
       ${e&&docFor(e.cours)&&isNum(e.diapo)?`<button class="btn sm" style="margin-top:8px" data-open="${esc(e.cours)}|${done?Number(e.diapo):Number(e.diapo)+1}">▶ Ouvrir le cours à la diapo ${done?Number(e.diapo):Number(e.diapo)+1}</button>`:''}
       ${r&&r.texte?`<div class="rep">💡 ${esc(r.texte)}</div>`:''}</div></div>`}).join('');
   $('#main').innerHTML=`<div class="week"><button class="arr" id="wPrev">‹</button><div class="days">${days}</div><button class="arr" id="wNext">›</button></div>
@@ -352,11 +354,12 @@ function openDet(cl){
   $('#detTitle').innerHTML=`<span style="color:${c}">●</span> ${esc(cl)}`;
   $('#detBody').innerHTML=(r&&r.texte?`<div class="rep" style="font-size:15px;padding:10px">💡 ${esc(r.texte)}</div>`:'')+
    `<div class="row" style="margin:12px 0"><button class="btn main" id="detAdd">✏️ Noter où j’en suis</button></div><div class="row" style="margin:-4px 0 12px"><button class="btn sm" id="detShare" style="flex:1">🤝 Envoyer cette classe à un collègue</button></div><div class="hint" id="shareMsg"></div>`+
-   (list.length?list.map(e=>`<div class="it" style="--c:${c}"><b>${esc(e.cours)}${e.diapo?' · '+esc(e.diapo):''}</b><div class="hint">${fmt(e.ts)}${e.auteur&&e.auteur!==((CFG&&CFG.nom)||'')?' · par '+esc(e.auteur):''}</div>${e.note?`<div style="margin-top:6px;white-space:pre-wrap">${esc(e.note)}</div>`:''}${e.photo?`<img src="${blob(e.photo)}" alt="">`:''}${e.audio?`<audio controls preload="none" src="${blob(e.audio)}"></audio>`:''}${docFor(e.cours)&&isNum(e.diapo)?`<button class="btn sm" style="margin-top:8px" data-open="${esc(e.cours)}|${Number(e.diapo)}">📄 Voir la diapo ${esc(e.diapo)}</button>`:''}<button class="del" data-del="${esc(e.id)}">Supprimer</button></div>`).join(''):'<div class="empty">Aucune entrée pour cette classe.</div>');
+   (list.length?list.map(e=>`<div class="it" style="--c:${c}"><b>${esc(e.cours)}${e.diapo?' · '+esc(e.diapo):''}</b><div class="hint">${fmt(e.ts)}${e.auteur&&e.auteur!==((CFG&&CFG.nom)||'')?' · par '+esc(e.auteur):''}</div>${e.note?`<div style="margin-top:6px;white-space:pre-wrap">${esc(e.note)}</div>`:''}${e.photo?`<img src="${blob(e.photo)}" alt="">`:''}${e.audio?`<audio controls preload="none" src="${blob(e.audio)}"></audio>`:''}${docFor(e.cours)&&isNum(e.diapo)?`<button class="btn sm" style="margin-top:8px" data-open="${esc(e.cours)}|${Number(e.diapo)}">📄 Voir la diapo ${esc(e.diapo)}</button>`:''}<div class="row" style="margin-top:8px;gap:8px"><button class="btn sm" data-edit="${esc(e.id)}" style="flex:1">✏️ Modifier</button><button class="del" data-del="${esc(e.id)}" style="margin:0">Supprimer</button></div></div>`).join(''):'<div class="empty">Aucune entrée pour cette classe.</div>');
   $('#detAdd').onclick=()=>{close('#sheetDet');openAdd(cl)};
   $('#detShare').onclick=()=>shareClass(cl);
   document.querySelectorAll('#detBody [data-open]').forEach(b=>b.onclick=()=>{const [c,p]=b.dataset.open.split('|');viewDoc(docFor(c),+p,'view')});
   document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{delTarget=b.dataset.del;openSheet('#sheetConf')});
+  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{close('#sheetDet');openEdit(b.dataset.edit)});
   openSheet('#sheetDet');
 }
 
@@ -373,7 +376,10 @@ function prefill(){const e=last(sel.classe);$('#cours').value=e?e.cours:'';$('#d
   try{const d=JSON.parse(localStorage.getItem('cs_draft')||'null');if(d&&d.classe===sel.classe&&Date.now()-d.t<6*3600e3){if(d.cours)$('#cours').value=d.cours;$('#diapo').value=d.diapo||'';if(d.note)$('#note').value=d.note}}catch(e){}}
 function saveDraft(){try{localStorage.setItem('cs_draft',JSON.stringify({classe:sel.classe,cours:$('#cours').value,diapo:$('#diapo').value,note:$('#note').value,t:Date.now()}))}catch(e){}}
 ['#cours','#diapo','#note'].forEach(k=>document.querySelector(k).addEventListener('input',()=>saveDraft()));
-function openAdd(cl){if(!classes().length){openSet(CFG||{classes:[],horaire:{}});return}
+let EDITID=null;
+function openEdit(id){const e=ENTRIES.find(x=>x.id===id);if(!e)return;openAdd(e.classe);EDITID=id;$('#cours').value=e.cours||'';$('#diapo').value=e.diapo||'';$('#note').value=e.note||'';
+  {const d=new Date(e.ts);$('#dcours').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}drawChips();updDocBox();$('#msg').textContent='Modification de la note du '+fmt(e.ts).split(' · ')[0]+'.';$('#save').textContent='Enregistrer la modification'}
+function openAdd(cl){EDITID=null;$('#save').textContent='Enregistrer';if(!classes().length){openSet(CFG||{classes:[],horaire:{}});return}
   sel.classe=cl||guessClass();$('#note').value='';prefill();{const d=new Date();$('#dcours').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}photoBlob=null;audioFile=null;
   $('#prev').style.display='none';$('#btnOcr').style.display='none';$('#audPrev').style.display='none';$('#readHint').textContent='';$('#msg').textContent='';drawChips();updDocBox();openSheet('#sheetAdd')}
 function close(s){$(s).classList.remove('on');if(s==='#sheetSet'){const p=$('#pick');if(p)p.style.display='none';try{render()}catch(e){}}}
@@ -437,7 +443,8 @@ $('#save').onclick=async()=>{if(typeof srOn!=='undefined'&&srOn){try{sr.stop()}c
     if(photoBlob&&assets){try{photo=(await assets.upload(photoBlob)).id}catch(e){warn='La photo n’a pas pu être jointe. '}}
     if(audioFile&&assets){try{audio=(await assets.upload(audioFile)).id}catch(e){warn+='Le mémo vocal n’a pas pu être joint. '}}
     let ts=Date.now();if(F.date){const d=new Date(F.date+'T12:00:00');if(!sameDay(d,new Date()))ts=d.getTime()}
-    const rec={type:'entree',auteur:(CFG&&CFG.nom)||'',classe:F.classe,cours:F.cours,diapo:F.diapo,note:F.note,photo,audio,ts};const id='e'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+    const old=EDITID?ENTRIES.find(x=>x.id===EDITID):null;if(old){if(!photo)photo=old.photo||null;if(!audio)audio=old.audio||null;if(F.date&&sameDay(new Date(F.date+'T12:00:00'),new Date(old.ts)))ts=old.ts}
+    const rec={type:'entree',auteur:old?(old.auteur||''):((CFG&&CFG.nom)||''),classe:F.classe,cours:F.cours,diapo:F.diapo,note:F.note,photo,audio,ts};const id=old?old.id:'e'+Date.now()+'_'+Math.random().toString(36).slice(2,7);EDITID=null;
     await col.doc(id).set(rec);ENTRIES=ENTRIES.filter(e=>e.id!==id).concat([Object.assign({id},rec)]);render();
     try{localStorage.removeItem('cs_draft')}catch(e){}
     $('#msg').textContent=warn+'Enregistré ✔';if(!warn)celebrate();setTimeout(()=>close('#sheetAdd'),warn?2500:700);

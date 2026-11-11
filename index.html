@@ -148,14 +148,14 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <label>Ce que nous avons fait</label>
   <textarea id="note" placeholder="Écrivez, ou touchez le micro du clavier pour dicter."></textarea>
   <div class="row" style="margin-top:8px">
-    <button class="btn sm" id="btnDict" style="display:none">🎙️ Dicter</button>
+    <button class="btn sm" id="btnDict">🎙️ Parler : le texte s’écrit</button>
     <button class="btn sm" id="btnSum" style="display:none">✨ Résumer</button>
-    <button class="btn sm" id="btnRec">🎙️ Enregistrer un mémo vocal</button>
+    <button class="btn sm" id="btnRec">🔴 Enregistrer ma voix (à réécouter)</button>
     <button class="btn sm" id="btnAudio">🎧 Joindre un fichier audio</button>
   </div>
   <input type="file" id="audio" accept="audio/*,.m4a,.mp3,.wav,.aac" class="vh" tabindex="-1" aria-hidden="true">
   <audio id="audPrev" class="aud" controls style="display:none"></audio>
-  <div class="hint" id="recHint">Mémo vocal : touchez « Enregistrer », parlez, puis touchez « Arrêter ». Vous pourrez le réécouter dans l’historique de la classe.</div>
+  <div class="hint" id="recHint">« Parler » écrit ce que vous dites dans la note. « Enregistrer ma voix » garde le son : vous le réécoutez ici, puis dans l’historique de la classe.</div>
   <div class="row" style="margin-top:18px"><button class="btn main" id="save">Enregistrer</button></div>
   <div class="msg" id="msg"></div>
 </div></div>
@@ -407,7 +407,20 @@ $('#btnSum').onclick=async()=>{const t=$('#note').value.trim();if(!t||!sample)re
   try{const r=await sample('Résume en deux ou trois phrases complètes, dans la langue du texte, ce qui a été fait en classe et où il faudra reprendre. Texte : '+t,{modelTier:'quick'});if(r&&r.text){$('#note').value=r.text.trim();saveDraft()}}catch(e){}
   $('#btnSum').disabled=false;$('#btnSum').textContent='✨ Résumer'};
 let listening=false;
-$('#btnDict').onclick=()=>{if(!dict)return;if(listening){dict.stop().catch(()=>{});return}dict.start().catch(e=>{if(e&&e.code==='not_granted')$('#btnDict').style.display='none'})};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let sr=null,srOn=false,srBase='',srPar=false;
+function srStop(){srOn=false;$('#btnDict').textContent='🎙️ Parler : le texte s’écrit';$('#btnDict').classList.remove('blue');if(srPar&&rec&&rec.state==='recording'){rec.stop()}srPar=false}
+$('#btnDict').onclick=async()=>{const H=t=>$('#recHint').textContent=t;
+  if(srOn){try{sr.stop()}catch(e){}srStop();return}
+  if(!SR){$('#note').focus();H('Sur cet appareil, touchez le micro 🎙️ du clavier, en bas à droite : ce que vous dites s’écrit dans la note.');return}
+  try{sr=new SR();sr.lang=/^fr/i.test(navigator.language||'')?navigator.language:'fr-FR';sr.continuous=true;sr.interimResults=true;
+    const n=$('#note');srBase=n.value?n.value.replace(/\s+$/,'')+' ':'';
+    sr.onresult=e=>{let f='',it='';for(let i=0;i<e.results.length;i++){const r=e.results[i];(r.isFinal?(f+=r[0].transcript+' '):(it+=r[0].transcript))}n.value=(srBase+f+it).replace(/ +/g,' ');try{saveDraft()}catch(x){}};
+    sr.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')H('Dictée refusée : autorisez le micro et la dictée pour cette app, ou utilisez le micro 🎙️ du clavier.');else if(e.error!=='no-speech'&&e.error!=='aborted')H('La dictée s’est arrêtée. Touchez à nouveau pour continuer, ou utilisez le micro 🎙️ du clavier.')};
+    sr.onend=()=>{if(srOn)srStop()};
+    sr.start();srOn=true;$('#btnDict').textContent='■ Arrêter (le texte s’écrit…)';$('#btnDict').classList.add('blue');H('🎙️ Parlez : le texte s’écrit dans la note.');
+    // hors iPhone : la voix est aussi gardée pour la réécouter
+    if(!/iPhone|iPad|iPod/.test(navigator.userAgent)&&!(rec&&rec.state==='recording')){srPar=true;$('#btnRec').click()}
+  }catch(e){srStop();$('#note').focus();H('Dictée indisponible ici : touchez le micro 🎙️ du clavier, ce que vous dites s’écrit dans la note.')}};
 
 function celebrate(){const t=$('#toast');t.classList.add('on');setTimeout(()=>t.classList.remove('on'),1100);
   for(let i=0;i<26;i++){const c=document.createElement('div');c.className='conf';c.style.background=PAL[i%PAL.length];document.body.appendChild(c);
@@ -614,7 +627,7 @@ $('#btnRec').onclick=async()=>{
     rec=new MediaRecorder(recStream,mt?{mimeType:mt}:undefined);recChunks=[];
     rec.ondataavailable=e=>{if(e.data&&e.data.size)recChunks.push(e.data)};
     rec.onstop=()=>{recStream.getTracks().forEach(t=>t.stop());const b=new Blob(recChunks,{type:rec.mimeType||'audio/mp4'});
-      audioFile=b;$('#audPrev').src=URL.createObjectURL(b);$('#audPrev').style.display='block';$('#btnRec').textContent='🎙️ Refaire le mémo vocal';$('#recHint').textContent='Mémo prêt : il sera enregistré avec la fiche.'};
+      audioFile=b;$('#audPrev').src=URL.createObjectURL(b);$('#audPrev').style.display='block';$('#btnRec').textContent='🔴 Refaire l’enregistrement';$('#recHint').textContent='Mémo prêt : il sera enregistré avec la fiche.'};
     rec.start();$('#btnRec').textContent='■ Arrêter l’enregistrement';$('#recHint').textContent='🔴 Enregistrement en cours…';
   }catch(e){$('#recHint').textContent='Micro indisponible : autorisez le micro pour cette app dans Réglages, ou joignez un fichier audio.'}};
 

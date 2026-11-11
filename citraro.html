@@ -189,7 +189,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <div class="chips" id="brush" style="margin-top:8px"></div>
   <div id="hgrid" style="margin-top:10px"></div>
   <div id="pick" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-top:2px solid var(--line);border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18)"></div>
-  <h2>Les heures de mon collège</h2><div class="hint">Réglez le début de chaque période, pauses comprises : la grille suit. La photo de l’horaire les remplit quand elle arrive à les lire.</div><div id="perEdit" style="margin-top:8px"></div><input type="hidden" id="perStart">
+  <h2>Les heures de mon collège</h2><div class="hint">Changez une heure : toutes les suivantes se décalent d’autant, les pauses restent les mêmes. Il suffit donc de régler la première période, puis seulement celles qui suivent une pause différente.</div><div id="perEdit" style="margin-top:8px"></div><input type="hidden" id="perStart">
   <div class="row" style="margin-top:18px"><button class="btn main" id="saveSet">Enregistrer les réglages</button></div>
   <div class="msg" id="setMsg"></div>
   <h2>📚 Mes documents de cours</h2>
@@ -376,7 +376,7 @@ function saveDraft(){try{localStorage.setItem('cs_draft',JSON.stringify({classe:
 function openAdd(cl){if(!classes().length){openSet(CFG||{classes:[],horaire:{}});return}
   sel.classe=cl||guessClass();$('#note').value='';prefill();{const d=new Date();$('#dcours').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}photoBlob=null;audioFile=null;
   $('#prev').style.display='none';$('#btnOcr').style.display='none';$('#audPrev').style.display='none';$('#readHint').textContent='';$('#msg').textContent='';drawChips();updDocBox();openSheet('#sheetAdd')}
-function close(s){$(s).classList.remove('on')}
+function close(s){$(s).classList.remove('on');if(s==='#sheetSet'){const p=$('#pick');if(p)p.style.display='none';try{render()}catch(e){}}}
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>b.closest('.sheet').classList.remove('on'));
 $('#fab').onclick=()=>openAdd();
 $('#cours').oninput=()=>{drawChips();updDocBox()};
@@ -446,7 +446,7 @@ function ecolor(cl){const i=EDIT.classes.findIndex(c=>c.id===cl);return PAL[(i<0
 function pickCell(d,i){const cls=EDIT.classes.filter(c=>c.id.trim());const p=$('#pick');
   p.innerHTML=`<div class="hint" style="margin-bottom:8px"><b>${JOURS[d]} · ${esc(EDIT.periodes[i])}</b> — quelle classe ?</div><div class="chips">`+cls.map(c=>`<button class="chip sel" style="--c:${ecolor(c.id)}" data-pk="${esc(c.id)}">${esc(c.id)}</button>`).join('')+`<button class="chip er" data-pk="">🧽 Vide</button><button class="chip" data-pk="__x">Annuler</button></div>`+(cls.length?'':'<div class="hint">Ajoutez d’abord une classe plus haut.</div>');
   p.style.display='block';p.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{if(b.dataset.pk!=='__x')G[d][i]=b.dataset.pk;p.style.display='none';drawGrid()})}
-function drawGrid(){
+function drawGrid(){autoSave();
   const cls=EDIT.classes.filter(c=>c.id.trim());
   $('#brush').innerHTML=cls.map(c=>`<button class="chip ${BR===c.id?'sel':''}" style="--c:${ecolor(c.id)}" data-br="${esc(c.id)}">${esc(c.id)}</button>`).join('')+`<button class="chip er ${BR===''?'sel':''}" data-br="">🧽 Effacer</button>`;
   document.querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{BR=b.dataset.br;drawGrid()});
@@ -458,8 +458,10 @@ function drawGrid(){
     G[d][i]=(G[d][i]===BR?'':BR);drawGrid()});
   if(window.KEEPPER)return;
   $('#perEdit').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+EDIT.periodes.map((p,i)=>`<label style="margin:0;display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px"><span style="width:26px;text-align:right;color:var(--mut);font-weight:800">${i+1}</span><input type="time" data-per="${i}" value="${esc(p)}" style="flex:1;min-width:0"></label>`).join('')+'</div><div class="hint" style="margin-top:6px">Durée d’un cours : <input type="number" id="perDur" min="30" max="120" value="'+(EDIT.duree||DUR)+'" style="width:70px;display:inline-block;padding:6px 8px"> minutes</div><div class="row" style="margin-top:8px"><button class="btn sm" id="perAdd" style="flex:1">＋ Une période de plus</button><button class="btn sm" id="perDel" style="flex:1">− Enlever la dernière</button></div>';
-  document.querySelectorAll('[data-per]').forEach(el=>el.oninput=el.onchange=()=>{if(el.value){EDIT.periodes[+el.dataset.per]=el.value;window.KEEPPER=1;try{drawGrid()}finally{window.KEEPPER=0}}});
-  $('#perDur').onchange=()=>{const v=+$('#perDur').value;if(v>=30&&v<=120)EDIT.duree=v};
+  document.querySelectorAll('[data-per]').forEach(el=>el.oninput=el.onchange=()=>{if(!el.value)return;const i=+el.dataset.per,dl=mins(el.value)-mins(EDIT.periodes[i]);if(!dl)return;const lim=i?mins(EDIT.periodes[i-1])+5:0;if(mins(el.value)<lim)return;
+    for(let j=i;j<EDIT.periodes.length;j++){const v=Math.min(1435,mins(EDIT.periodes[j])+dl);EDIT.periodes[j]=hm(v);if(j>i){const o=document.querySelector('[data-per="'+j+'"]');if(o)o.value=EDIT.periodes[j]}}
+    window.KEEPPER=1;try{drawGrid()}finally{window.KEEPPER=0}});
+  $('#perDur').onchange=()=>{const v=+$('#perDur').value;if(v>=30&&v<=120){EDIT.duree=v;autoSave()}};
   $('#perAdd').onclick=()=>{const l=EDIT.periodes[EDIT.periodes.length-1];EDIT.periodes.push(hm(Math.min(1380,mins(l)+50)));for(let d=1;d<=5;d++)G[d].push('');drawGrid()};
   $('#perDel').onclick=()=>{if(EDIT.periodes.length>1){EDIT.periodes.pop();for(let d=1;d<=5;d++)G[d].pop();drawGrid()}};
   if(0){  const ps=$('#perStart');ps.value=EDIT.periodes[0];ps.onchange=()=>{if(!ps.value)return;const dl=mins(ps.value)-mins(EDIT.periodes[0]);if(dl){EDIT.periodes=EDIT.periodes.map(p=>hm(mins(p)+dl));drawGrid()}};}
@@ -564,11 +566,16 @@ $('#gear').onclick=()=>openSet(CFG||{classes:[],horaire:{}});
 function drawSet(){
   $('#setClasses').innerHTML=EDIT.classes.map((c,i)=>`<div class="set"><div class="row" style="flex-wrap:nowrap"><input data-ci="${i}" data-f="id" value="${esc(c.id)}" placeholder="Nom de la classe"><input data-ci="${i}" data-f="emoji" value="${esc(c.emoji||'')}" placeholder="${autoEmo(c.id)}" style="width:64px;flex:none;text-align:center"><button class="rm" data-rc="${i}">×</button></div><input data-ci="${i}" data-f="cours" value="${esc(c.cours||'')}" placeholder="Cours (séparés par des virgules)" style="margin-top:6px"></div>`).join('')||'<div class="hint">Aucune classe pour l’instant.</div>';
   drawGrid();
-  document.querySelectorAll('[data-ci]').forEach(el=>el.oninput=()=>{const c=EDIT.classes[el.dataset.ci];const old=c.id;c[el.dataset.f]=el.value;if(el.dataset.f==='id')Object.values(EDIT.horaire).forEach(a=>a.forEach(s=>{if(s[0]===old)s[0]=el.value}))});
+  document.querySelectorAll('[data-ci]').forEach(el=>el.oninput=()=>{autoSave();const c=EDIT.classes[el.dataset.ci];const old=c.id;c[el.dataset.f]=el.value;if(el.dataset.f==='id')Object.values(EDIT.horaire).forEach(a=>a.forEach(s=>{if(s[0]===old)s[0]=el.value}))});
   document.querySelectorAll('[data-ci][data-f="id"]').forEach(el=>el.onblur=drawSet);
   document.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{EDIT.classes.splice(+b.dataset.rc,1);drawSet()});
 }
 $('#addClass').onclick=()=>{EDIT.classes.push({id:'',cours:''});drawSet();const ins=document.querySelectorAll('[data-f="id"]');ins[ins.length-1].focus()};
+let asT=null;function autoSave(){clearTimeout(asT);asT=setTimeout(async()=>{try{if(!col||!EDIT||!$('#sheetSet').classList.contains('on'))return;
+  const cls=EDIT.classes.filter(c=>c.id.trim()).map(c=>({id:c.id.trim(),cours:(c.cours||'').trim(),emoji:(c.emoji||'').trim()}));const ids=cls.map(c=>c.id);if(!ids.length||new Set(ids).size!==ids.length)return;
+  const H=gToHoraire();for(const d in H)H[d]=H[d].filter(x=>ids.includes(x[0])).sort((a,b)=>mins(a[1])-mins(b[1]));
+  const nom=$('#profName').value.trim();await col.doc('cfg').set({type:'cfg',classes:cls,horaire:H,periodes:EDIT.periodes.slice(),duree:EDIT.duree||DUR,nom,ts:Date.now()});
+  CFG={classes:cls,horaire:H,periodes:EDIT.periodes.slice(),duree:EDIT.duree||DUR,nom};loaded=true;$('#setMsg').textContent='Enregistré automatiquement ✔'}catch(e){}},700)}
 $('#saveSet').onclick=async()=>{
   if(!col){$('#setMsg').textContent='Connexion en cours…';return}
   {const ids=EDIT.classes.map(c=>c.id.trim()).filter(Boolean);if(new Set(ids).size!==ids.length){$('#setMsg').textContent='Deux classes portent le même nom.';return}}

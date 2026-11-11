@@ -1,1 +1,13 @@
-{"maj":"","entrees":[]}
+{
+ "maj": "2026-11-11 21:37",
+ "entrees": [
+  {
+   "id": "essai1",
+   "classe": "4DROS03",
+   "cours": "ESSAI (à supprimer) DIP 08",
+   "diapo": "112",
+   "note": "Essai du suivi automatique : capture d'écran reconnue. Reprendre à la diapo 113.",
+   "ts": 1794429442808
+  }
+ ]
+}

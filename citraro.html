@@ -648,7 +648,9 @@ $('#importFile').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=
     await reload()}catch(e){}}
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!(document.activeElement&&document.activeElement.id==='q'))render()});
   setInterval(()=>{if(document.activeElement&&document.activeElement.id==='q')return;render()},60000);
-  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if('serviceWorker' in navigator){const had=!!navigator.serviceWorker.controller;let rl=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!rl&&!document.querySelector('.sheet.on,.sheet.open,.sheet.show')){rl=true;location.reload()}});
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>{const up=()=>r.update().catch(()=>{});up();document.addEventListener('visibilitychange',()=>{if(!document.hidden)up()})}).catch(()=>{})}
 })();
 </script>
 </body>

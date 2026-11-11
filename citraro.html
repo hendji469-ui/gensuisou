@@ -7,8 +7,8 @@
 <meta name="apple-mobile-web-app-title" content="Gen suis où ?">
 <title>Gen suis où ?</title>
 <link rel="manifest" href="manifest-citraro.json">
-<link rel="apple-touch-icon" href="icon-180.png?v=7">
-<link rel="icon" href="icon-192.png?v=7">
+<link rel="apple-touch-icon" href="icon-180.png?v=8">
+<link rel="icon" href="icon-192.png?v=8">
 <meta name="theme-color" content="#ffcf3a">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -421,12 +421,15 @@ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let sr=null,sr
 function srStop(){srOn=false;$('#btnDict').textContent='🎙️ Parler : le texte s’écrit';$('#btnDict').classList.remove('blue');if(srPar&&rec&&rec.state==='recording'){rec.stop()}srPar=false}
 $('#btnDict').onclick=async()=>{const H=t=>$('#recHint').textContent=t;
   if(srOn){try{sr.stop()}catch(e){}srStop();return}
-  if(!SR){$('#note').focus();H('Sur cet appareil, touchez le micro 🎙️ du clavier, en bas à droite : ce que vous dites s’écrit dans la note.');return}
+  const iosApp=/iPhone|iPad|iPod/.test(navigator.userAgent)&&(navigator.standalone||matchMedia('(display-mode: standalone)').matches);
+  if(!SR||iosApp){const n=$('#note');n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(e){}n.scrollIntoView({block:'center'});H('Le clavier est ouvert : touchez le micro 🎙️ en bas à droite du clavier, puis parlez. Le texte s’écrit dans la note.');return}
+  if(0){$('#note').focus();H('Sur cet appareil, touchez le micro 🎙️ du clavier, en bas à droite : ce que vous dites s’écrit dans la note.');return}
   try{sr=new SR();sr.lang=/^fr/i.test(navigator.language||'')?navigator.language:'fr-FR';sr.continuous=true;sr.interimResults=true;
     const n=$('#note');srBase=n.value?n.value.replace(/\s+$/,'')+' ':'';
     sr.onresult=e=>{let f='',it='';for(let i=0;i<e.results.length;i++){const r=e.results[i];(r.isFinal?(f+=r[0].transcript+' '):(it+=r[0].transcript))}n.value=(srBase+f+it).replace(/ +/g,' ');try{saveDraft()}catch(x){}};
     sr.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')H('Dictée refusée : autorisez le micro et la dictée pour cette app, ou utilisez le micro 🎙️ du clavier.');else if(e.error!=='no-speech'&&e.error!=='aborted')H('La dictée s’est arrêtée. Touchez à nouveau pour continuer, ou utilisez le micro 🎙️ du clavier.')};
     sr.onend=()=>{if(srOn)srStop()};
+    let got=false;sr.onstart=()=>{got=true};setTimeout(()=>{if(srOn&&!got&&!$('#note').value.replace(srBase,'').trim()){try{sr.abort()}catch(e){}srStop();$('#note').focus();H('La dictée intégrée ne démarre pas ici : touchez le micro 🎙️ du clavier, puis parlez.')}},4000);
     sr.start();srOn=true;$('#btnDict').textContent='■ Arrêter (le texte s’écrit…)';$('#btnDict').classList.add('blue');H('🎙️ Parlez : le texte s’écrit dans la note.');
     // hors iPhone : la voix est aussi gardée pour la réécouter
     if(!/iPhone|iPad|iPod/.test(navigator.userAgent)&&!(rec&&rec.state==='recording')){srPar=true;$('#btnRec').click()}

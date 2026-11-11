@@ -48,7 +48,7 @@ h2{font-family:Fredoka,sans-serif;font-size:15px;letter-spacing:.5px;color:var(-
 .cl{font-family:Fredoka,sans-serif;font-weight:600;font-size:20px}
 .r{margin-top:3px;font-size:15.5px}
 .r b{color:var(--c)}
-.n{color:var(--mut);font-size:13.5px;margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.n{color:var(--mut);font-size:13.5px;margin-top:3px;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
 .rep{margin-top:7px;font-size:13.5px;background:#fff6d6;border-radius:10px;padding:6px 9px}
 .badge{position:absolute;top:10px;right:12px;background:var(--ok);color:#fff;border-radius:20px;font-size:12px;font-weight:800;padding:3px 8px}
 .thumb{width:84px;height:58px;border-radius:12px;object-fit:cover;flex:none;box-shadow:0 2px 6px rgba(0,0,0,.12)}
@@ -177,7 +177,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <h3>Mes classes et mon horaire</h3>
   <label>Votre nom (visible par vos collègues de co-enseignement)</label>
   <input id="profName" placeholder="ex. A. Citraro" autocomplete="off">
-  <div class="hint">Une ligne par classe, avec un émoji si vous voulez. Les cours, séparés par des virgules, deviennent des raccourcis lors de la saisie.</div>
+  <div class="hint">Une ligne par classe. Le symbole est choisi d’après la discipline (⚖️ droit, 🇬🇧 anglais, 📐 maths…) : pour en mettre un autre, touchez-le et tapez l’émoji de votre choix. Les cours, séparés par des virgules, deviennent des raccourcis lors de la saisie.</div>
   <div id="setClasses"></div>
   <button class="btn sm" id="addClass" style="margin-top:6px">＋ Ajouter une classe</button>
   <h2>Mon horaire</h2>
@@ -185,10 +185,12 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <input type="file" id="horPhoto" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
   <div class="hint" id="ocrMsg">Prenez votre horaire en photo : les classes trouvées s’ajoutent et se placent dans la grille. Vérifiez ensuite et corrigez d’un geste.</div>
   <img id="horPrev" class="prev" alt="">
-  <div class="hint" style="margin-top:12px"><b>Pour remplir ou corriger :</b> choisissez une classe ci-dessous, puis touchez les cases de la grille.</div>
+  <div class="hint" style="margin-top:12px"><b>Pour ajouter ou corriger un cours :</b> touchez une case de la grille, puis choisissez la classe. Pour remplir plusieurs cases d’un coup, choisissez d’abord une classe ci-dessous.</div>
   <div class="chips" id="brush" style="margin-top:8px"></div>
   <div id="hgrid" style="margin-top:10px"></div>
-  <details style="margin-top:8px"><summary class="hint">Heures des périodes</summary><div id="perEdit" class="hint"></div></details>
+  <div id="pick" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-top:2px solid var(--line);border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18)"></div>
+  <label style="margin-top:14px">Mon premier cours commence à</label><input type="time" id="perStart"><div class="hint">Toutes les heures se décalent d’autant (par exemple 08:10 au lieu de 08:00). Pour régler chaque période séparément, ouvrez la ligne ci-dessous.</div>
+  <details style="margin-top:8px"><summary class="hint">Heures de chaque période</summary><div id="perEdit" class="hint"></div></details>
   <div class="row" style="margin-top:18px"><button class="btn main" id="saveSet">Enregistrer les réglages</button></div>
   <div class="msg" id="setMsg"></div>
   <h2>📚 Mes documents de cours</h2>
@@ -297,7 +299,9 @@ const URLS={};const blob=id=>id?(URLS[id]||'about:blank#'+id):'';
 const classes=()=>CFG?CFG.classes:[];
 const color=cl=>{const i=classes().findIndex(c=>c.id===cl);return PAL[(i<0?0:i)%PAL.length]};
 const coursOf=cl=>{const c=classes().find(x=>x.id===cl);return c&&c.cours?c.cours.split(',').map(s=>s.trim()).filter(Boolean):[]};
-const emo=cl=>{const c=classes().find(x=>x.id===cl);if(c&&c.emoji)return c.emoji;return /^4/.test(cl)?'⚖️':/^2/.test(cl)?'🏛️':/^1/.test(cl)?'🗳️':'📘'};
+const DISC={DR:'⚖️',AN:'🇬🇧',MA:'📐',AM:'📐',FR:'📖',AL:'🇩🇪',IT:'🇮🇹',ES:'🇪🇸',HI:'🏺',GE:'🌍',GG:'🌍',PH:'🔭',PY:'🔭',CH:'🧪',BI:'🧬',EC:'💶',IN:'💻',MU:'🎵',AV:'🎨',AR:'🎨',EP:'⚽',ED:'⚽',LA:'🏛️',GR:'🏛️',PO:'💭',PS:'🧠',SC:'🔬',TM:'🎓',EN:'💬'};
+const autoEmo=cl=>{const m=String(cl||'').toUpperCase().match(/^\d?([A-Z]{2})/);return (m&&DISC[m[1]])||'📘'};
+const emo=cl=>{const c=classes().find(x=>x.id===cl);return (c&&c.emoji)||autoEmo(cl)};
 const openSheet=sel=>{const p=$(sel);p.classList.add('on');const pn=p.querySelector('.panel');if(pn)pn.scrollTop=0};
 const isNum=v=>/^\d+$/.test(String(v||'').trim());
 const nextStep=e=>!e?'':(isNum(e.diapo)?'diapo '+(Number(e.diapo)+1):(e.diapo?'après « '+esc(e.diapo)+' »':''));
@@ -331,7 +335,7 @@ function render(){
     const e=done||last(cl,dSel.getTime());const r=REP[cl];const on=isToday&&nowM()>=mins(a)-20&&nowM()<=mins(b);
     return `<div class="slot ${on?'now':''}" style="--c:${color(cl)};animation-delay:${j*0.05}s" data-cl="${esc(cl)}">${done?'<div class="badge">✓ noté</div>':''}${e&&e.photo?`<img class="thumb" src="${blob(e.photo)}" alt="">`:''}
       <div class="t"><div class="time">${esc(a)} – ${esc(b)}</div><div class="cl"><span class="emo">${esc(emo(cl))}</span>${esc(cl)}</div>
-      ${e?`<div class="r">${done?'Arrêté à':'Reprendre'} : <b>${esc(e.cours)}${done?(e.diapo?' · '+esc(e.diapo):''):(nextStep(e)?' · '+nextStep(e):'')}</b></div><div class="n">${done?'':(e.diapo?'Dernière fois : '+esc(e.diapo)+' · ':'')}${fmt(e.ts)}${e.note?' · '+esc(e.note):''}</div>`:'<div class="r" style="color:var(--mut)">Aucune entrée</div>'}
+      ${e?`<div class="r">${done?'Arrêté à':'Reprendre'} : <b>${esc(e.cours)}${done?(e.diapo?' · '+esc(e.diapo):''):(nextStep(e)?' · '+nextStep(e):'')}</b></div><div class="n">${done?'Noté '+fmt(e.ts):'<b>La dernière fois</b> ('+fmt(e.ts).split(' · ')[0]+') : arrêté à '+esc(e.cours)+(e.diapo?' · '+(isNum(e.diapo)?'diapo ':'')+esc(e.diapo):'')}${e.note?'<br>📝 '+esc(e.note):''}</div>`:'<div class="r" style="color:var(--mut)">Aucune entrée</div>'}
       ${e&&docFor(e.cours)&&isNum(e.diapo)?`<button class="btn sm" style="margin-top:8px" data-open="${esc(e.cours)}|${done?Number(e.diapo):Number(e.diapo)+1}">▶ Ouvrir le cours à la diapo ${done?Number(e.diapo):Number(e.diapo)+1}</button>`:''}
       ${r&&r.texte?`<div class="rep">💡 ${esc(r.texte)}</div>`:''}</div></div>`}).join('');
   $('#main').innerHTML=`<div class="week"><button class="arr" id="wPrev">‹</button><div class="days">${days}</div><button class="arr" id="wNext">›</button></div>
@@ -438,7 +442,11 @@ function buildG(){G={};for(let d=1;d<=5;d++){G[d]=EDIT.periodes.map(()=>'');for(
 function gToHoraire(){const H={};for(let d=1;d<=5;d++){const out=[];let cur=null;
   EDIT.periodes.forEach((p,i)=>{const cl=G[d][i];if(cl&&cur&&cur[0]===cl&&cur.li===i-1){cur[2]=hm(mins(p)+DUR);cur.li=i}else{if(cur)out.push([cur[0],cur[1],cur[2]]);cur=cl?Object.assign([cl,p,hm(mins(p)+DUR)],{li:i}):null}});
   if(cur)out.push([cur[0],cur[1],cur[2]]);if(out.length)H[d]=out}return H}
+function gToHoraireFrom(g){const sv=G;G=g;const H=gToHoraire();G=sv;return H}
 function ecolor(cl){const i=EDIT.classes.findIndex(c=>c.id===cl);return PAL[(i<0?0:i)%PAL.length]}
+function pickCell(d,i){const cls=EDIT.classes.filter(c=>c.id.trim());const p=$('#pick');
+  p.innerHTML=`<div class="hint" style="margin-bottom:8px"><b>${JOURS[d]} · ${esc(EDIT.periodes[i])}</b> — quelle classe ?</div><div class="chips">`+cls.map(c=>`<button class="chip sel" style="--c:${ecolor(c.id)}" data-pk="${esc(c.id)}">${esc(c.id)}</button>`).join('')+`<button class="chip er" data-pk="">🧽 Vide</button><button class="chip" data-pk="__x">Annuler</button></div>`+(cls.length?'':'<div class="hint">Ajoutez d’abord une classe plus haut.</div>');
+  p.style.display='block';p.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{if(b.dataset.pk!=='__x')G[d][i]=b.dataset.pk;p.style.display='none';drawGrid()})}
 function drawGrid(){
   const cls=EDIT.classes.filter(c=>c.id.trim());
   $('#brush').innerHTML=cls.map(c=>`<button class="chip ${BR===c.id?'sel':''}" style="--c:${ecolor(c.id)}" data-br="${esc(c.id)}">${esc(c.id)}</button>`).join('')+`<button class="chip er ${BR===''?'sel':''}" data-br="">🧽 Effacer</button>`;
@@ -447,16 +455,17 @@ function drawGrid(){
   EDIT.periodes.forEach((p,i)=>{h+=`<tr><td class="t">${esc(p)}</td>`+[1,2,3,4,5].map(d=>{const cl=G[d][i];return `<td class="${cl?'f':''}" data-g="${d},${i}" style="${cl?'background:'+ecolor(cl):''}">${esc(cl)}</td>`}).join('')+'</tr>'});
   $("#hgrid").innerHTML=h+"</table>";
   document.querySelectorAll('[data-g]').forEach(td=>td.onclick=()=>{const [d,i]=td.dataset.g.split(',').map(Number);
-    if(BR===null){$('#setMsg').textContent='Choisissez d’abord une classe (ou « Effacer ») au-dessus de la grille.';return}
+    if(BR===null){pickCell(d,i);return}
     G[d][i]=(G[d][i]===BR?'':BR);drawGrid()});
   $('#perEdit').innerHTML=EDIT.periodes.map((p,i)=>`<input type="time" data-per="${i}" value="${esc(p)}" style="width:31%;margin:3px 1%;display:inline-block">`).join('')+'<div>Chaque période dure 45 minutes.</div>';
-  document.querySelectorAll('[data-per]').forEach(el=>el.onchange=()=>{EDIT.periodes[+el.dataset.per]=el.value;drawGrid()});
+  document.querySelectorAll('[data-per]').forEach(el=>el.onchange=()=>{if(el.value){EDIT.periodes[+el.dataset.per]=el.value;drawGrid()}});
+  const ps=$('#perStart');ps.value=EDIT.periodes[0];ps.onchange=()=>{if(!ps.value)return;const dl=mins(ps.value)-mins(EDIT.periodes[0]);if(dl){EDIT.periodes=EDIT.periodes.map(p=>hm(mins(p)+dl));drawGrid()}};
 }
 // --- Lecture de l'horaire en photo ---
 $('#btnHorPhoto').onclick=()=>$('#horPhoto').click();
 function loadTess(){return window.Tesseract?Promise.resolve():new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc)})}
-function normCode(t){t=t.toUpperCase().replace(/[^A-Z0-9_]/g,'');const m=t.match(/^(\d)([A-Z]{2,7}?)([0-9OZDQIL]{2,3})(_?[0-9A-Z]{0,3})$/);if(!m)return null;
-  let n=m[3].replace(/[ODQ]/g,'0').replace(/Z/g,'2').replace(/[IL]/g,'1');if(n.length===3&&n[1]==='0'&&n[0]==='0')n=n.slice(1);return m[1]+m[2]+n+(m[4]&&/^_/.test(m[4])?m[4]:'')}
+function normCode(t){t=t.toUpperCase().replace(/[^A-Z0-9_]/g,'');const m=t.match(/^(\d)([A-Z]{2,7})([0-9OQIL][0-9OQILSZBG])(_[0-9A-Z]{0,3})?$/);if(!m)return null;
+  return m[1]+m[2]+m[3].replace(/[OQ]/g,'0').replace(/[IL]/g,'1').replace('S','5').replace('Z','2').replace('B','8').replace('G','6')+(m[4]||'')}
 $('#horPhoto').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
   const msg=t=>$('#ocrMsg').textContent=t;
   $('#horPrev').src=URL.createObjectURL(f);$('#horPrev').style.display='block';
@@ -520,6 +529,12 @@ $('#horPhoto').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=''
     // heures illisibles : la première ligne suit immédiatement la ligne des jours, les lignes sont régulières
     if(!rowY&&pitch>12&&top.length){const hy=top.reduce((s,h)=>s+h.y,0)/top.length;let a=hy+pitch;if(rm.length){const k=Math.round((rm[0]-a)/pitch);const adj=rm.map(y=>{const q=Math.round((y-a)/pitch);return y-(a+q*pitch)});a+=adj.reduce((s,v)=>s+v,0)/adj.length}
       rowY=EDIT.periodes.map((_,i)=>a+pitch*i);rowH=pitch}
+    // heures propres à l'établissement, lues sur la photo
+    if(rowY&&rowH>8){const fd={};for(const w of W){if(w.y<y0||w.y>y1||(colX&&w.x>colX[0]-(colX[1]-colX[0])*.45))continue;const m=w.t.match(/^(\d{1,2})[:h.](\d{2})$/);if(!m)continue;const v=+m[1]*60+ +m[2];if(v<390||v>1140||+m[2]>59)continue;
+        const i=rowY.reduce((bi,y,k)=>Math.abs(y-w.y)<Math.abs(rowY[bi]-w.y)?k:bi,0);if(Math.abs(rowY[i]-w.y)<rowH*.45&&fd[i]==null)fd[i]=v}
+      const ks=Object.keys(fd).map(Number).sort((a,b)=>a-b);let ok=ks.length>=3;for(let j=1;j<ks.length&&ok;j++){const g=(fd[ks[j]]-fd[ks[j-1]])/(ks[j]-ks[j-1]);if(g<40||g>80)ok=false}
+      if(ok&&ks.some(k=>hm(fd[k])!==EDIT.periodes[k])){const old=EDIT.periodes.map(mins);const np=old.map((o,i)=>{if(fd[i]!=null)return fd[i];const k=ks.reduce((b,q)=>Math.abs(q-i)<Math.abs(b-i)?q:b,ks[0]);return o+(fd[k]-old[k])});
+        if(np.every((v,i)=>i===0||v>np[i-1])){const keep=JSON.parse(JSON.stringify(G));EDIT.periodes=np.map(hm);EDIT.horaire=gToHoraireFrom(keep)}}}
     let placed=0;
     if(colX&&rowY&&codes.length){buildG();
       for(const w of codes){if(w.x<Math.min(...colX)-(colX[1]-colX[0])*0.7)continue;
@@ -532,7 +547,7 @@ $('#horPhoto').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=''
 function openSet(c){EDIT=JSON.parse(JSON.stringify(c||{classes:[],horaire:{}}));$('#profName').value=(CFG&&CFG.nom)||'';EDIT.horaire=EDIT.horaire||{};EDIT.periodes=EDIT.periodes||PER0.slice();buildG();BR=null;setTimeout(drawDocs,0);$('#horPrev').style.display='none';drawSet();$('#setMsg').textContent='';openSheet('#sheetSet')}
 $('#gear').onclick=()=>openSet(CFG||{classes:[],horaire:{}});
 function drawSet(){
-  $('#setClasses').innerHTML=EDIT.classes.map((c,i)=>`<div class="set"><div class="row" style="flex-wrap:nowrap"><input data-ci="${i}" data-f="id" value="${esc(c.id)}" placeholder="Nom de la classe"><input data-ci="${i}" data-f="emoji" value="${esc(c.emoji||'')}" placeholder="😀" style="width:64px;flex:none;text-align:center"><button class="rm" data-rc="${i}">×</button></div><input data-ci="${i}" data-f="cours" value="${esc(c.cours||'')}" placeholder="Cours (séparés par des virgules)" style="margin-top:6px"></div>`).join('')||'<div class="hint">Aucune classe pour l’instant.</div>';
+  $('#setClasses').innerHTML=EDIT.classes.map((c,i)=>`<div class="set"><div class="row" style="flex-wrap:nowrap"><input data-ci="${i}" data-f="id" value="${esc(c.id)}" placeholder="Nom de la classe"><input data-ci="${i}" data-f="emoji" value="${esc(c.emoji||'')}" placeholder="${autoEmo(c.id)}" style="width:64px;flex:none;text-align:center"><button class="rm" data-rc="${i}">×</button></div><input data-ci="${i}" data-f="cours" value="${esc(c.cours||'')}" placeholder="Cours (séparés par des virgules)" style="margin-top:6px"></div>`).join('')||'<div class="hint">Aucune classe pour l’instant.</div>';
   drawGrid();
   document.querySelectorAll('[data-ci]').forEach(el=>el.oninput=()=>{const c=EDIT.classes[el.dataset.ci];const old=c.id;c[el.dataset.f]=el.value;if(el.dataset.f==='id')Object.values(EDIT.horaire).forEach(a=>a.forEach(s=>{if(s[0]===old)s[0]=el.value}))});
   document.querySelectorAll('[data-ci][data-f="id"]').forEach(el=>el.onblur=drawSet);

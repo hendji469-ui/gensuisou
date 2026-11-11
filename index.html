@@ -108,6 +108,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
 .chip.er{border-style:dashed}
 @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+.vh{position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;overflow:hidden}
 </style>
 </head>
 <body>
@@ -129,7 +130,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <label>Classe</label><div class="chips" id="chipsClasse"></div>
   <label>Photo (le numéro de diapo se remplit tout seul)</label>
   <div class="row"><button class="btn blue" id="btnPhoto">📷 Photo de la dernière diapo</button></div>
-  <input type="file" id="photo" accept="image/*" style="display:none">
+  <input type="file" id="photo" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
   <img id="prev" class="prev" alt="">
   <div class="row" style="margin-top:8px"><button class="btn sm" id="btnOcr" style="display:none">🔍 Lire le texte de la photo</button></div>
   <div class="hint" id="readHint"></div>
@@ -152,7 +153,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
     <button class="btn sm" id="btnRec">🎙️ Enregistrer un mémo vocal</button>
     <button class="btn sm" id="btnAudio">🎧 Joindre un fichier audio</button>
   </div>
-  <input type="file" id="audio" accept="audio/*,.m4a,.mp3,.wav,.aac" style="display:none">
+  <input type="file" id="audio" accept="audio/*,.m4a,.mp3,.wav,.aac" class="vh" tabindex="-1" aria-hidden="true">
   <audio id="audPrev" class="aud" controls style="display:none"></audio>
   <div class="hint" id="recHint">Mémo vocal : touchez « Enregistrer », parlez, puis touchez « Arrêter ». Vous pourrez le réécouter dans l’historique de la classe.</div>
   <div class="row" style="margin-top:18px"><button class="btn main" id="save">Enregistrer</button></div>
@@ -181,7 +182,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <button class="btn sm" id="addClass" style="margin-top:6px">＋ Ajouter une classe</button>
   <h2>Mon horaire</h2>
   <div class="row"><button class="btn blue" id="btnHorPhoto">📷 Photographier mon horaire</button></div>
-  <input type="file" id="horPhoto" accept="image/*" style="display:none">
+  <input type="file" id="horPhoto" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
   <div class="hint" id="ocrMsg">Prenez votre horaire en photo : les classes trouvées s’ajoutent et se placent dans la grille. Vérifiez ensuite et corrigez d’un geste.</div>
   <img id="horPrev" class="prev" alt="">
   <div class="hint" style="margin-top:12px"><b>Pour remplir ou corriger :</b> choisissez une classe ci-dessous, puis touchez les cases de la grille.</div>
@@ -195,12 +196,12 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <div id="docList" style="margin-top:8px"></div>
   <div id="docAdd" style="display:none;margin-top:8px"><input id="docName" list="coursList" placeholder="Nom du cours (ex. LP 04)"><datalist id="coursList"></datalist><div class="row" style="margin-top:6px"><button class="btn main" id="docSave">Ajouter ce document</button></div></div>
   <div class="row" style="margin-top:8px"><button class="btn" id="btnDoc">＋ Ajouter un cours (PDF, PowerPoint, Word)</button></div>
-  <input type="file" id="docFile" accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none">
+  <input type="file" id="docFile" accept=".pdf,.pptx,.docx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="vh" tabindex="-1" aria-hidden="true">
   <div class="msg" id="docMsg"></div>
   <h2>Sauvegarde</h2>
   <div class="hint">Vos données restent sur cet appareil. Faites de temps en temps une sauvegarde : elle s’enregistre dans Fichiers (iCloud Drive) et permet de tout retrouver sur un autre iPhone.</div>
   <div class="row" style="margin-top:10px"><button class="btn" id="btnExport">💾 Sauvegarder mes données</button><button class="btn" id="btnImport">📥 Importer (sauvegarde ou classe reçue)</button></div>
-  <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+  <input type="file" id="importFile" accept=".json,application/json" class="vh" tabindex="-1" aria-hidden="true">
   <div class="msg" id="bkMsg"></div>
 </div></div>
 

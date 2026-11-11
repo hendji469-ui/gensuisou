@@ -189,8 +189,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <div class="chips" id="brush" style="margin-top:8px"></div>
   <div id="hgrid" style="margin-top:10px"></div>
   <div id="pick" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--card);border-top:2px solid var(--line);border-radius:22px 22px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18)"></div>
-  <label style="margin-top:14px">Mon premier cours commence à</label><input type="time" id="perStart"><div class="hint">Toutes les heures se décalent d’autant (par exemple 08:10 au lieu de 08:00). Pour régler chaque période séparément, ouvrez la ligne ci-dessous.</div>
-  <details style="margin-top:8px"><summary class="hint">Heures de chaque période</summary><div id="perEdit" class="hint"></div></details>
+  <h2>Les heures de mon collège</h2><div class="hint">Réglez le début de chaque période, pauses comprises : la grille suit. La photo de l’horaire les remplit quand elle arrive à les lire.</div><div id="perEdit" style="margin-top:8px"></div><input type="hidden" id="perStart">
   <div class="row" style="margin-top:18px"><button class="btn main" id="saveSet">Enregistrer les réglages</button></div>
   <div class="msg" id="setMsg"></div>
   <h2>📚 Mes documents de cours</h2>
@@ -440,7 +439,7 @@ const PER0=['08:00','08:50','09:55','10:45','11:35','12:25','13:15','14:05','15:
 const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
 function buildG(){G={};for(let d=1;d<=5;d++){G[d]=EDIT.periodes.map(()=>'');for(const [cl,a,b] of (EDIT.horaire[d]||[]))EDIT.periodes.forEach((p,i)=>{if(mins(p)>=mins(a)&&mins(p)<mins(b))G[d][i]=cl})}}
 function gToHoraire(){const H={};for(let d=1;d<=5;d++){const out=[];let cur=null;
-  EDIT.periodes.forEach((p,i)=>{const cl=G[d][i];if(cl&&cur&&cur[0]===cl&&cur.li===i-1){cur[2]=hm(mins(p)+DUR);cur.li=i}else{if(cur)out.push([cur[0],cur[1],cur[2]]);cur=cl?Object.assign([cl,p,hm(mins(p)+DUR)],{li:i}):null}});
+  EDIT.periodes.forEach((p,i)=>{const cl=G[d][i];if(cl&&cur&&cur[0]===cl&&cur.li===i-1){cur[2]=hm(mins(p)+(EDIT.duree||DUR));cur.li=i}else{if(cur)out.push([cur[0],cur[1],cur[2]]);cur=cl?Object.assign([cl,p,hm(mins(p)+(EDIT.duree||DUR))],{li:i}):null}});
   if(cur)out.push([cur[0],cur[1],cur[2]]);if(out.length)H[d]=out}return H}
 function gToHoraireFrom(g){const sv=G;G=g;const H=gToHoraire();G=sv;return H}
 function ecolor(cl){const i=EDIT.classes.findIndex(c=>c.id===cl);return PAL[(i<0?0:i)%PAL.length]}
@@ -457,15 +456,18 @@ function drawGrid(){
   document.querySelectorAll('[data-g]').forEach(td=>td.onclick=()=>{const [d,i]=td.dataset.g.split(',').map(Number);
     if(BR===null){pickCell(d,i);return}
     G[d][i]=(G[d][i]===BR?'':BR);drawGrid()});
-  $('#perEdit').innerHTML=EDIT.periodes.map((p,i)=>`<input type="time" data-per="${i}" value="${esc(p)}" style="width:31%;margin:3px 1%;display:inline-block">`).join('')+'<div>Chaque période dure 45 minutes.</div>';
+  $('#perEdit').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+EDIT.periodes.map((p,i)=>`<label style="margin:0;display:flex;align-items:center;gap:8px;text-transform:none;font-size:14px"><span style="width:26px;text-align:right;color:var(--mut);font-weight:800">${i+1}</span><input type="time" data-per="${i}" value="${esc(p)}" style="flex:1;min-width:0"></label>`).join('')+'</div><div class="hint" style="margin-top:6px">Durée d’un cours : <input type="number" id="perDur" min="30" max="120" value="'+(EDIT.duree||DUR)+'" style="width:70px;display:inline-block;padding:6px 8px"> minutes</div><div class="row" style="margin-top:8px"><button class="btn sm" id="perAdd" style="flex:1">＋ Une période de plus</button><button class="btn sm" id="perDel" style="flex:1">− Enlever la dernière</button></div>';
   document.querySelectorAll('[data-per]').forEach(el=>el.onchange=()=>{if(el.value){EDIT.periodes[+el.dataset.per]=el.value;drawGrid()}});
-  const ps=$('#perStart');ps.value=EDIT.periodes[0];ps.onchange=()=>{if(!ps.value)return;const dl=mins(ps.value)-mins(EDIT.periodes[0]);if(dl){EDIT.periodes=EDIT.periodes.map(p=>hm(mins(p)+dl));drawGrid()}};
+  $('#perDur').onchange=()=>{const v=+$('#perDur').value;if(v>=30&&v<=120)EDIT.duree=v};
+  $('#perAdd').onclick=()=>{const l=EDIT.periodes[EDIT.periodes.length-1];EDIT.periodes.push(hm(Math.min(1380,mins(l)+50)));for(let d=1;d<=5;d++)G[d].push('');drawGrid()};
+  $('#perDel').onclick=()=>{if(EDIT.periodes.length>1){EDIT.periodes.pop();for(let d=1;d<=5;d++)G[d].pop();drawGrid()}};
+  if(0){  const ps=$('#perStart');ps.value=EDIT.periodes[0];ps.onchange=()=>{if(!ps.value)return;const dl=mins(ps.value)-mins(EDIT.periodes[0]);if(dl){EDIT.periodes=EDIT.periodes.map(p=>hm(mins(p)+dl));drawGrid()}};}
 }
 // --- Lecture de l'horaire en photo ---
 $('#btnHorPhoto').onclick=()=>$('#horPhoto').click();
 function loadTess(){return window.Tesseract?Promise.resolve():new Promise((ok,ko)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';sc.onload=ok;sc.onerror=ko;document.head.appendChild(sc)})}
-function normCode(t){t=t.toUpperCase().replace(/[^A-Z0-9_]/g,'');const m=t.match(/^(\d)([A-Z]{2,7})([0-9OQIL][0-9OQILSZBG])(_[0-9A-Z]{0,3})?$/);if(!m)return null;
-  return m[1]+m[2]+m[3].replace(/[OQ]/g,'0').replace(/[IL]/g,'1').replace('S','5').replace('Z','2').replace('B','8').replace('G','6')+(m[4]||'')}
+function normCode(t){t=t.toUpperCase().replace(/[–—]/g,'-').replace(/[^A-Z0-9_\-]/g,'').replace(/^-+|-+$/g,'');const m=t.match(/^(\d)([A-Z]{2,7})(-?)([0-9OQIL][0-9OQILSZBG])(_[0-9A-Z]{0,3})?$/);if(!m)return null;
+  return m[1]+m[2]+m[3]+m[4].replace(/[OQ]/g,'0').replace(/[IL]/g,'1').replace('S','5').replace('Z','2').replace('B','8').replace('G','6')+(m[5]||'')}
 $('#horPhoto').onchange=async ev=>{const f=ev.target.files[0];ev.target.value='';if(!f)return;
   const msg=t=>$('#ocrMsg').textContent=t;
   $('#horPrev').src=URL.createObjectURL(f);$('#horPrev').style.display='block';
@@ -506,7 +508,7 @@ $('#horPhoto').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=''
     const rep=Object.keys(fq).filter(k=>fq[k]>=2);const cf0=t=>t.toUpperCase().replace(/[OQ]/g,'0').replace(/S/g,'5');const r2=(rep.length?rep:Object.keys(fq));const KN=[...new Set([...EDIT.classes.map(c=>c.id),...r2.filter(k=>!r2.some(o=>o!==k&&cf0(o).length>cf0(k).length&&cf0(o).startsWith(cf0(k))))])];
     const cf=t=>t.toUpperCase().replace(/[OQ]/g,'0').replace(/[IL]/g,'1').replace(/S/g,'5').replace(/Z/g,'2').replace(/B/g,'8').replace(/G/g,'6');
     const lev=(a,b)=>{const m=a.length,n=b.length,D=[...Array(m+1)].map((_,i)=>[i]);for(let j=1;j<=n;j++)D[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)D[i][j]=Math.min(D[i-1][j]+1,D[i][j-1]+1,D[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return D[m][n]};
-    const toCode=t=>{const u=t.toUpperCase().replace(/[^A-Z0-9_]/g,'').replace(/_.*$/,'');if(u.length<5||u.length>10)return null;
+    const toCode=t=>{const u=t.toUpperCase().replace(/[–—]/g,'-').replace(/[^A-Z0-9_\-]/g,'').replace(/_.*$/,'');if(u.length<5||u.length>10)return null;
       const n=normCode(u);if(n&&KN.includes(n))return n;const cu=cf(u);let best=null,bd=9,sd=9;for(const k of KN){const d=lev(cu,cf(k));if(d<bd){sd=bd;bd=d;best=k}else if(d<sd)sd=d}
       if(best&&bd<sd&&(bd<=2||(bd===3&&cu.slice(-1)===cf(best).slice(-1))))return best;return n&&(!KN.length||(bd>3&&fq[n]>=2))?n:null};
     const times=W.filter(w=>w.y>y0&&w.y<y1).map(w=>{let v=null;const m=w.t.match(/^(\d{1,2})[:h.,](\d{2})/);if(m)v=hm(+m[1]*60+ +m[2]);else{const dg=w.t.replace(/\D/g,'');if(dg.length===4&&/^[0-9:.,h\-]{4,6}$/.test(w.t))v=dg.slice(0,2)+':'+dg.slice(2)}
@@ -529,8 +531,20 @@ $('#horPhoto').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=''
     // heures illisibles : la première ligne suit immédiatement la ligne des jours, les lignes sont régulières
     if(!rowY&&pitch>12&&top.length){const hy=top.reduce((s,h)=>s+h.y,0)/top.length;let a=hy+pitch;if(rm.length){const k=Math.round((rm[0]-a)/pitch);const adj=rm.map(y=>{const q=Math.round((y-a)/pitch);return y-(a+q*pitch)});a+=adj.reduce((s,v)=>s+v,0)/adj.length}
       rowY=EDIT.periodes.map((_,i)=>a+pitch*i);rowH=pitch}
+    // lignes d'après la colonne des heures réellement imprimée (pauses propres à chaque collège)
+    let txCol=null;{const tt=W.filter(w=>w.y>y0-10&&w.y<y1).map(w=>{const m=w.t.replace(/^[^0-9]+|[^0-9]+$/g,'').match(/^(\d{1,2})[:h.](\d{2})$/);if(!m)return null;const v=+m[1]*60+ +m[2];return{x:w.x,y:w.y,v,ok:v>=390&&v<=1140&&+m[2]<60}}).filter(Boolean);
+      if(tt.length>=4){const Wx=Math.max(...W.map(w=>w.x));const mx=tt.map(t=>t.x).sort((a,b)=>a-b)[tt.length>>1];const col=tt.filter(t=>Math.abs(t.x-mx)<Wx*.06).sort((a,b)=>a.y-b.y);
+        const one=[];let lv=-1;for(const t of col){if(t.ok){if(t.v<=lv)break;lv=t.v}one.push(t)}
+        if(one.length>=4){txCol=mx;const dfs=one.slice(1).map((t,i)=>t.y-one[i].y).sort((a,b)=>a-b);const med=dfs[dfs.length>>1];
+          let idx=0;if(top.length){const hy=top.reduce((s,h)=>s+h.y,0)/top.length;idx=Math.max(0,Math.round((one[0].y-hy)/med)-1)}else{const f=one.find(t=>t.ok);if(f&&f===one[0]&&f.v>=520&&f.v<=575)idx=1}
+          const ky={};one.forEach((t,j)=>{if(j)idx+=Math.max(1,Math.round((t.y-one[j-1].y)/med));ky[idx]=t.y});
+          const ks=Object.keys(ky).map(Number);const n=Math.min(14,Math.max(EDIT.periodes.length,Math.max(...ks)+1));
+          while(EDIT.periodes.length<n)EDIT.periodes.push(hm(mins(EDIT.periodes[EDIT.periodes.length-1])+50));
+          rowY=[];for(let i=0;i<n;i++){if(ky[i]!=null){rowY.push(ky[i]);continue}const k=ks.reduce((b,q)=>Math.abs(q-i)<Math.abs(b-i)?q:b,ks[0]);rowY.push(ky[k]+(i-k)*med)}rowH=med}}}
+    if(!colX&&!hk.length&&txCol!=null&&cm.length&&cm[0]>txCol){const px=cm.length>=2?Math.min(...cm.slice(1).map((v,i)=>v-cm[i])):1.7*(cm[0]-txCol);if(px>30)colX=[0,1,2,3,4].map(d=>cm[0]+d*px)}
+    if(!colX&&hk.length===1&&txCol!=null){const px=1.7*(hx[hk[0]]-txCol);if(px>30)colX=[0,1,2,3,4].map(d=>hx[hk[0]]+(d-hk[0])*px)}
     // heures propres à l'établissement, lues sur la photo
-    if(rowY&&rowH>8){const fd={};for(const w of W){if(w.y<y0||w.y>y1||(colX&&w.x>colX[0]-(colX[1]-colX[0])*.45))continue;const m=w.t.match(/^(\d{1,2})[:h.](\d{2})$/);if(!m)continue;const v=+m[1]*60+ +m[2];if(v<390||v>1140||+m[2]>59)continue;
+    if(rowY&&rowH>8){const fd={};for(const w of W){if(w.y<y0||w.y>y1||(colX&&w.x>colX[0]-(colX[1]-colX[0])*.45))continue;const m=w.t.replace(/^[^0-9]+|[^0-9]+$/g,'').match(/^(\d{1,2})[:h.](\d{2})$/);if(!m)continue;const v=+m[1]*60+ +m[2];if(v<390||v>1140||+m[2]>59)continue;
         const i=rowY.reduce((bi,y,k)=>Math.abs(y-w.y)<Math.abs(rowY[bi]-w.y)?k:bi,0);if(Math.abs(rowY[i]-w.y)<rowH*.45&&fd[i]==null)fd[i]=v}
       const ks=Object.keys(fd).map(Number).sort((a,b)=>a-b);let ok=ks.length>=3;for(let j=1;j<ks.length&&ok;j++){const g=(fd[ks[j]]-fd[ks[j-1]])/(ks[j]-ks[j-1]);if(g<40||g>80)ok=false}
       if(ok&&ks.some(k=>hm(fd[k])!==EDIT.periodes[k])){const old=EDIT.periodes.map(mins);const np=old.map((o,i)=>{if(fd[i]!=null)return fd[i];const k=ks.reduce((b,q)=>Math.abs(q-i)<Math.abs(b-i)?q:b,ks[0]);return o+(fd[k]-old[k])});
@@ -540,7 +554,7 @@ $('#horPhoto').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=''
       for(const w of codes){if(w.x<Math.min(...colX)-(colX[1]-colX[0])*0.7)continue;
         const d=colX.reduce((bi,x,i)=>Math.abs(x-w.x)<Math.abs(colX[bi]-w.x)?i:bi,0)+1;
         const i=rowY.reduce((bi,y,k)=>Math.abs(y-w.y)<Math.abs(rowY[bi]-w.y)?k:bi,0);
-        if(Math.abs(rowY[i]-w.y)<rowH*0.6){G[d][i]=w.c;placed++}}}
+        if(Math.abs(rowY[i]-w.y)<rowH*0.6&&Math.abs(colX[d-1]-w.x)<Math.abs(colX[1]-colX[0])*.55&&G[d][i]!==undefined){G[d][i]=w.c;placed++}}}
     drawSet();
     msg(added||placed?`J’ai trouvé ${added} nouvelle(s) classe(s) et placé ${placed} période(s). Vérifiez la grille et corrigez en touchant les cases si besoin.`:'Je n’ai pas réussi à lire cet horaire. Reprenez la photo bien à plat et nette, ou remplissez la grille à la main en quelques touches.');
   }catch(e){msg('La lecture automatique n’est pas disponible (connexion ?). Remplissez la grille à la main : choisissez une classe, puis touchez les cases.')}};
@@ -560,13 +574,13 @@ $('#saveSet').onclick=async()=>{
   EDIT.classes=EDIT.classes.filter(c=>c.id.trim()).map(c=>({id:c.id.trim(),cours:(c.cours||'').trim(),emoji:(c.emoji||'').trim()}));
   EDIT.horaire=gToHoraire();
   for(const d in EDIT.horaire)EDIT.horaire[d]=EDIT.horaire[d].filter(s=>EDIT.classes.some(c=>c.id===s[0])).sort((a,b)=>mins(a[1])-mins(b[1]));
-  try{EDIT.nom=$('#profName').value.trim();await col.doc('cfg').set({type:'cfg',classes:EDIT.classes,horaire:EDIT.horaire,periodes:EDIT.periodes,nom:EDIT.nom,ts:Date.now()});CFG=EDIT;loaded=true;$('#setMsg').textContent='Enregistré ✔';render();setTimeout(()=>close('#sheetSet'),500)}
+  try{EDIT.nom=$('#profName').value.trim();await col.doc('cfg').set({type:'cfg',classes:EDIT.classes,horaire:EDIT.horaire,periodes:EDIT.periodes,duree:EDIT.duree||DUR,nom:EDIT.nom,ts:Date.now()});CFG=EDIT;loaded=true;$('#setMsg').textContent='Enregistré ✔';render();setTimeout(()=>close('#sheetSet'),500)}
   catch(e){$('#setMsg').textContent='Échec de l’enregistrement. Réessayez.'}};
 
 function docsOf(s){const arr=s&&s.docs?s.docs:(Array.isArray(s)?s:[]);return arr.map(d=>{const x=typeof d.data==='function'?d.data():(d.data||{});return Object.assign({id:d.id},x)})}
 function ingest(list){ENTRIES=[];REP={};DOCS=[];let cfg=null;
   for(const d of list){if(d.id==='cfg')cfg=d;else if(d.type==='doc')DOCS.push(d);else if(d.type==='entree')ENTRIES.push(d);else if(d.type==='reprise')REP[d.classe]=d}
-  CFG=cfg?{classes:cfg.classes||[],horaire:cfg.horaire||{},periodes:cfg.periodes,nom:cfg.nom||''}:null;loaded=true;render()}
+  CFG=cfg?{classes:cfg.classes||[],horaire:cfg.horaire||{},periodes:cfg.periodes,duree:cfg.duree,nom:cfg.nom||''}:null;loaded=true;render()}
 
 let tx=null,ty=null;
 $('#main').addEventListener('touchstart',e=>{const t=e.touches[0];tx=t.clientX;ty=t.clientY},{passive:true});

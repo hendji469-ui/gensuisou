@@ -341,7 +341,9 @@ function render(){
       <div class="zn ${done?'ok':'todo'}"><div class="zt">${done?'✅ Ce cours-ci · arrêté à':'✏️ Ce cours-ci'}</div>${done?`<div><b>${esc(done.cours)}${done.diapo?' · '+(isNum(done.diapo)?'diapo ':'')+esc(done.diapo):''}</b></div>${done.note?'<div class="zx">📝 '+esc(done.note)+'</div>':''}`:`<button class="btn sm" data-add="${esc(cl)}" style="margin-top:4px">Noter où je me suis arrêté</button>`}</div>
       ${e&&docFor(e.cours)&&isNum(e.diapo)?`<button class="btn sm" style="margin-top:8px" data-open="${esc(e.cours)}|${done?Number(e.diapo):Number(e.diapo)+1}">▶ Ouvrir le cours à la diapo ${done?Number(e.diapo):Number(e.diapo)+1}</button>`:''}
       ${r&&r.texte?`<div class="rep">💡 ${esc(r.texte)}</div>`:''}</div></div>`}).join('');
-  $('#main').innerHTML=`<div class="week"><button class="arr" id="wPrev">‹</button><div class="days">${days}</div><button class="arr" id="wNext">›</button></div>
+  const fri=new Date(mon);fri.setDate(mon.getDate()+4);const MO=d=>d.toLocaleDateString('fr-CH',{month:'long'});
+  const wkLbl=(mon.getMonth()===fri.getMonth()?`Semaine du ${mon.getDate()} au ${fri.getDate()} ${MO(fri)}`:`Semaine du ${mon.getDate()} ${MO(mon)} au ${fri.getDate()} ${MO(fri)}`)+' '+fri.getFullYear();
+  $('#main').innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin:2px 2px 8px"><button class="btn sm" id="wkOpen" style="flex:1;text-align:left;font-weight:800">🗓 ${wkLbl} · voir toute la semaine</button>${weekOff!==0?'<button class="btn sm" id="wkToday">Aujourd’hui</button>':''}</div><div class="week"><button class="arr" id="wPrev">‹</button><div class="days">${days}</div><button class="arr" id="wNext">›</button></div>
     <h2>${dSel.toLocaleDateString('fr-CH',{weekday:'long',day:'numeric',month:'long'})}</h2>${cards||'<div class="empty">🌿 Pas de cours ce jour-là.</div>'}
     <h2>Toutes mes classes</h2><input class="search" id="q" type="search" placeholder="🔎 Rechercher dans mes notes (un mot, un cours, une classe)" value="${esc(Q)}"><div id="res"></div><div class="grid" id="grid">${classes().map(c=>{const e=last(c.id);return `<div class="mini" style="--c:${color(c.id)}" data-cl="${esc(c.id)}"><div class="cl"><span class="emo">${esc(emo(c.id))}</span>${esc(c.id)}</div><div class="r">${e?esc(e.cours)+(e.diapo?' · '+esc(e.diapo):''):'—'}</div></div>`}).join('')}</div>`;
   const qi=$('#q');qi.oninput=()=>{Q=qi.value;search()};search();
@@ -349,6 +351,7 @@ function render(){
   document.querySelectorAll('[data-open]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const [c,p]=b.dataset.open.split('|');viewDoc(docFor(c),+p,'view')});
   document.querySelectorAll('#main [data-add]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();openAdd(b.dataset.add)});
   document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{selDay=+b.dataset.day;render()});
+  $('#wkOpen').onclick=()=>openWeek();{const t=$('#wkToday');if(t)t.onclick=()=>{weekOff=0;selDay=null;render()}}
   $('#wPrev').onclick=()=>{weekOff--;render()};$('#wNext').onclick=()=>{weekOff++;render()};
 }
 
@@ -386,15 +389,22 @@ function openAdd(cl){EDITID=null;$('#save').textContent='Enregistrer';if(!classe
   sel.classe=cl||guessClass();$('#note').value='';prefill();{const d=new Date();$('#dcours').value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}photoBlob=null;audioFile=null;
   $('#prev').style.display='none';$('#btnOcr').style.display='none';$('#audPrev').style.display='none';$('#readHint').textContent='';$('#msg').textContent='';drawChips();updDocBox();openSheet('#sheetAdd')}
 function close(s){$(s).classList.remove('on');if(s==='#sheetDet'){const p=$('#sheetDet .panel');if(p)p.style.maxWidth=''}if(s==='#sheetSet'){const p=$('#pick');if(p)p.style.display='none';try{render()}catch(e){}}}
-function openWeek(){const J=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi'];const d1=e=>e?new Date(e.ts).toLocaleDateString('fr-CH',{day:'numeric',month:'short'}):'';
-  const line=e=>e?`<b>${esc(e.cours||'')}</b>${e.diapo?' · diapo '+esc(e.diapo):''} <span style="color:var(--mut)">(${d1(e)})</span>${e.note?`<div class="zx">${esc(e.note)}</div>`:''}`:'<span style="color:var(--mut)">rien de noté</span>';
-  let h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">';
-  for(let d=1;d<=5;d++){const sl=((CFG&&CFG.horaire&&CFG.horaire[d])||[]).slice().sort((a,b)=>a[1]<b[1]?-1:1);
-    h+=`<div class="set" style="padding:10px"><div class="zt">${J[d]}</div>`+(sl.length?sl.map(s=>`<div class="zn" data-wk="${esc(s[0])}" style="cursor:pointer"><div><span style="color:${color(s[0])}">●</span> <b>${esc(s[0])}</b> <span style="color:var(--mut)">${esc(s[1])}–${esc(s[2]||'')}</span></div><div style="margin-top:3px">${line(last(s[0]))}</div></div>`).join(''):'<div class="zx">Pas de cours</div>')+'</div>'}
+function openWeek(){const J=['','Lundi','Mardi','Mercredi','Jeudi','Vendredi'];const mon=monday(weekOff);const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  const d1=e=>e?new Date(e.ts).toLocaleDateString('fr-CH',{day:'numeric',month:'short'}):'';const dp=e=>e.diapo?' · '+(isNum(e.diapo)?'diapo ':'')+esc(e.diapo):'';
+  const line=e=>e?`<b>${esc(e.cours||'')}</b>${dp(e)} <span style="color:var(--mut)">(${d1(e)})</span>${e.note?`<div class="zx">${esc(e.note)}</div>`:''}`:'<span style="color:var(--mut)">rien de noté</span>';
+  let h=`<div class="row" style="margin-bottom:10px"><button class="btn sm" id="wkP">‹ Semaine précédente</button><button class="btn sm" id="wkN">Semaine suivante ›</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px">`;
+  for(let d=1;d<=5;d++){const dd=new Date(mon);dd.setDate(mon.getDate()+d-1);const d0=new Date(dd);d0.setHours(0,0,0,0);const tod=sameDay(dd,new Date());
+    const sl=((CFG&&CFG.horaire&&CFG.horaire[d])||[]).slice().sort((a,b)=>a[1]<b[1]?-1:1);
+    h+=`<div class="set" data-wd="${d}" style="padding:10px;cursor:pointer;${tod?'outline:2px solid var(--acc)':''}"><div class="zt">${J[d]} ${dd.getDate()} ${dd.toLocaleDateString('fr-CH',{month:'long'})}${tod?' · aujourd’hui':''}</div>`+(sl.length?sl.map(s=>{const done=ENTRIES.filter(e=>e.classe===s[0]&&sameDay(new Date(e.ts),dd)).sort((x,y)=>y.ts-x.ts)[0];const pv=last(s[0],d0.getTime());const r=REP[s[0]];
+      return `<div class="zn ${done?'ok':''}"><div><span style="color:${color(s[0])}">●</span> <b>${esc(s[0])}</b> <span style="color:var(--mut)">${esc(s[1])}–${esc(s[2]||'')}</span></div><div style="margin-top:3px">${done?'✅ Arrêté à : <b>'+esc(done.cours)+'</b>'+dp(done):(pv?'Reprendre : <b>'+esc(pv.cours)+'</b>'+(nextStep(pv)?' · '+nextStep(pv):''):'<span style="color:var(--mut)">rien de noté</span>')}</div>${!done&&pv&&pv.note?`<div class="zx">📝 ${esc(pv.note)}</div>`:''}${r&&r.texte?`<div class="zx">💡 ${esc(r.texte)}</div>`:''}</div>`}).join(''):'<div class="zx">Pas de cours</div>')+'</div>'}
   h+='</div><h3 style="margin-top:16px">Tous mes cours, classe par classe</h3>';
   for(const c of classes()){const by={};ENTRIES.filter(e=>e.classe===c.id).sort((a,b)=>a.ts-b.ts).forEach(e=>{by[e.cours||'']=e});const L=Object.values(by).sort((a,b)=>b.ts-a.ts);
     h+=`<div class="set" style="padding:10px;margin-top:8px"><div><span style="color:${color(c.id)}">●</span> <b>${esc(c.id)}</b></div>`+(L.length?L.map(e=>`<div class="zn">${line(e)}</div>`).join(''):'<div class="zx">Rien de noté pour cette classe.</div>')+'</div>'}
-  $('#detTitle').textContent='Ma semaine et tous mes cours';$('#detBody').innerHTML=h;$('#sheetDet .panel').style.maxWidth='1250px';$('#sheetDet').classList.add('on')}
+  const MO=d=>d.toLocaleDateString('fr-CH',{month:'long'});
+  $('#detTitle').textContent=(mon.getMonth()===fri.getMonth()?`Semaine du ${mon.getDate()} au ${fri.getDate()} ${MO(fri)}`:`Semaine du ${mon.getDate()} ${MO(mon)} au ${fri.getDate()} ${MO(fri)}`)+' '+fri.getFullYear();
+  $('#detBody').innerHTML=h;$('#sheetDet .panel').style.maxWidth='1250px';$('#sheetDet').classList.add('on');
+  $('#wkP').onclick=()=>{weekOff--;selDay=1;render();openWeek()};$('#wkN').onclick=()=>{weekOff++;selDay=1;render();openWeek()};
+  document.querySelectorAll('#detBody [data-wd]').forEach(b=>b.onclick=()=>{selDay=+b.dataset.wd;close('#sheetDet');render()})}
 $('#btnWeek').onclick=()=>{if(CFG)openWeek()};
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{const sh=b.closest('.sheet');if(sh.id==='sheetAdd'&&typeof srOn!=='undefined'&&srOn){try{sr.stop()}catch(e){}srStop()}close('#'+sh.id)});
 $('#fab').onclick=()=>openAdd();

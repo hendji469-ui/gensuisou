@@ -1,13 +1,13 @@
 {
- "maj": "2026-11-12 06:34",
+ "maj": "2026-11-12 16:30",
  "entrees": [
   {
-   "id": "essai1",
+   "id": "c20261112_0845",
    "classe": "4DROS03",
-   "cours": "ESSAI (à supprimer) DIP 08",
-   "diapo": "112",
-   "note": "Essai du suivi automatique : capture d'écran reconnue. Reprendre à la diapo 113.",
-   "ts": 1794429442808
+   "cours": "DIP 08 Relations diplomatiques",
+   "diapo": "84",
+   "note": "Capture d'écran de 08:45 (persona non grata, correction). Reprendre à la diapo 85.",
+   "ts": 1794469513000
   }
  ],
  "reprises": [

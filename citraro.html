@@ -695,6 +695,8 @@ $('#importFile').onchange=async ev=>{const f=ev.target.files[0];ev.target.value=
     for(const e of (L.entrees||[])){if(!e||!e.id||!e.classe)continue;const id='auto_'+e.id;if(seen.includes(id)||ENTRIES.some(x=>x.id===id))continue;
       const rec={type:'entree',auteur:(CFG&&CFG.nom)||'',classe:e.classe,cours:e.cours||e.classe,diapo:String(e.diapo||''),note:e.note||'',photo:null,audio:null,ts:e.ts||Date.now()};
       await col.doc(id).set(rec);ENTRIES.push(Object.assign({id},rec));seen.push(id);n++}
+    for(const r of (L.reprises||[])){if(!r||!r.id||!r.classe)continue;const id='autorep_'+r.id;if(seen.includes(id))continue;
+      const rec={type:'reprise',classe:r.classe,texte:r.texte||'',ts:r.ts||Date.now()};await col.doc('rep_'+r.classe).set(rec);REP[r.classe]=Object.assign({id:'rep_'+r.classe},rec);seen.push(id);n++}
     if(n){try{localStorage.setItem('cs_auto_seen',JSON.stringify(seen.slice(-400)))}catch(e){}render()}}catch(e){}}
   syncSuivi();document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncSuivi()});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!(document.activeElement&&document.activeElement.id==='q'))render()});

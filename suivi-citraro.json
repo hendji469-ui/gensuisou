@@ -1,5 +1,5 @@
 {
- "maj": "2026-11-11 21:37",
+ "maj": "2026-11-12 06:34",
  "entrees": [
   {
    "id": "essai1",
@@ -8,6 +8,14 @@
    "diapo": "112",
    "note": "Essai du suivi automatique : capture d'écran reconnue. Reprendre à la diapo 113.",
    "ts": 1794429442808
+  }
+ ],
+ "reprises": [
+  {
+   "id": "1re_exos_p43_44",
+   "classe": "1DRDF07",
+   "texte": "Semaine du 16 nov. : faire faire les exercices du manuel p. 43-44 (initiative et référendum), par deux. Ensuite, transmettre la correction : Bureau > COURS SEMAINE PAR SEMAINE > COURS 16 AU 20 NOV > 1RE.",
+   "ts": 1794461643332
   }
  ]
 }

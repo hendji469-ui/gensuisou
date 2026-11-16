@@ -1,5 +1,5 @@
 {
- "maj": "2026-11-12 16:30",
+ "maj": "2026-11-16 16:10",
  "entrees": [
   {
    "id": "c20261112_0845",
@@ -16,6 +16,30 @@
    "classe": "1DRDF07",
    "texte": "Semaine du 16 nov. : faire faire les exercices du manuel p. 43-44 (initiative et référendum), par deux. Ensuite, transmettre la correction : Bureau > COURS SEMAINE PAR SEMAINE > COURS 16 AU 20 NOV > 1RE.",
    "ts": 1794461643332
+  },
+  {
+   "id": "lp04_1611_4DROS04",
+   "classe": "4DROS04",
+   "texte": "Mardi 17.11 (LP) : LP 04, reprendre à la diapo 43 (« Trois cas, trois articles »). Nouveau dans LP 04 : diapo 61, capsule de reprise (3 min 52) avant la partie III (féries, 3 jours utiles, notification pendant les féries, actions civiles) ; diapo 94, capsule récapitulative des deux règles des féries (1 min 50), juste après la correction de l'exercice 7. Classroom : LP 01 à 04 et DIP 06 à 08 envoyés le 16.11 ; restent DIP 09 et LP 05 pour la regroupée.",
+   "ts": 1794841637745
+  },
+  {
+   "id": "lp04_1611_4DROS01",
+   "classe": "4DROS01",
+   "texte": "Jeudi 19.11 (LP) : LP 04, reprendre à la diapo 43 (« Trois cas, trois articles »). Nouveau dans LP 04 : diapo 61, capsule de reprise (3 min 52) avant la partie III (féries, 3 jours utiles, notification pendant les féries, actions civiles) ; diapo 94, capsule récapitulative des deux règles des féries (1 min 50), juste après la correction de l'exercice 7. Classroom : LP 01 à 04 et DIP 06 à 08 envoyés le 16.11 ; restent DIP 09 et LP 05 pour la regroupée.",
+   "ts": 1794841637745
+  },
+  {
+   "id": "lp04_1611_4DROS02",
+   "classe": "4DROS02",
+   "texte": "Vendredi 20.11 (LP) : LP 04, reprendre à la diapo 43 (« Trois cas, trois articles »). Nouveau dans LP 04 : diapo 61, capsule de reprise (3 min 52) avant la partie III (féries, 3 jours utiles, notification pendant les féries, actions civiles) ; diapo 94, capsule récapitulative des deux règles des féries (1 min 50), juste après la correction de l'exercice 7. Classroom : LP 01 à 04 et DIP 06 à 08 envoyés le 16.11 ; restent DIP 09 et LP 05 pour la regroupée.",
+   "ts": 1794841637745
+  },
+  {
+   "id": "lp04_1611_4DROS03",
+   "classe": "4DROS03",
+   "texte": "Lundi 23.11 (LP) : LP 04, reprendre là où votre note du 16.11 l'indique. Les numéros de diapo ont changé : de 61 à 92, ajoutez 1 ; à partir de 93, ajoutez 2. Si vous étiez à la « Reprise » (diapo 60), lancez la capsule de la diapo 61 (3 min 52), puis la partie III. Après la correction de l'exercice 7 : capsule récapitulative diapo 94 (1 min 50). Classroom : LP 01 à 04 et DIP 06 à 08 envoyés le 16.11 ; restent DIP 09 et LP 05 pour la regroupée.",
+   "ts": 1794841637745
   }
  ]
 }

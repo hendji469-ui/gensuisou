@@ -130,7 +130,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <button class="x" data-close>×</button>
   <h3 id="addTitle">Où en êtes-vous ?</h3>
   <label>Classe</label><div class="chips" id="chipsClasse"></div>
-  <label>Moment</label><div class="chips" id="chipsMom"><button class="chip" data-m="pause">⏸ Fin de la 1re période</button><button class="chip" data-m="fin">🏁 Fin du cours</button></div>
+  <label>Moment</label><div class="chips" id="chipsMom"><button class="chip" data-m="fin">🏁 Fin du cours</button><button class="chip" data-m="pause" style="border-style:dashed">⏸ Fin de la 1re période (facultatif)</button></div>
   <div class="hint" id="momHint" style="font-weight:700"></div>
   <label id="lblPhoto">Photo (facultatif)</label>
   <div class="row"><button class="btn blue" id="btnPhoto">📷 Photo de la dernière diapo</button></div>
@@ -395,7 +395,7 @@ function drawMom(){document.querySelectorAll('#chipsMom [data-m]').forEach(b=>{b
   $('#lblNote').textContent=P?'Ce que nous avons fait pendant la 1re période':(ap?'Ce que nous avons fait pendant la 2e période':'Ce que nous avons fait');
   {const pn=$('#sheetAdd .panel');if(pn)pn.style.boxShadow=P?'inset 0 0 0 3px #6c7ae0':''}
   $('#save').textContent=(EDITID?'Enregistrer la modification':(MOM==='pause'?'Enregistrer la fin de la 1re période':'Enregistrer'))}
-function guessMom(cl){const t=(CFG&&CFG.horaire&&CFG.horaire[new Date().getDay()])||[];const n=nowM();
+function guessMom(cl){return 'fin';const t=(CFG&&CFG.horaire&&CFG.horaire[new Date().getDay()])||[];const n=nowM();
   for(const [c,a,b] of t){if(c!==cl)continue;const A=mins(a),B=mins(b);if(B-A>60&&n>=A+30&&n<B-15&&!dayPause(cl,new Date()))return 'pause'}return 'fin'}
 function updDocBox(){const d=docFor($('#cours').value);$('#docBox').style.display=d?'':'none';$('#docRes').innerHTML='';$('#docQ').value=''}
 function prefill(){const e=last(sel.classe);$('#cours').value=e&&e.cours?e.cours:(sel.classe||'');$('#diapo').value='';

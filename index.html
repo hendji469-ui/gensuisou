@@ -130,7 +130,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <button class="x" data-close>×</button>
   <h3 id="addTitle">Où en êtes-vous ?</h3>
   <label>Classe</label><div class="chips" id="chipsClasse"></div>
-  <label>Moment</label><div class="chips" id="chipsMom"><button class="chip" data-m="fin">🏁 Fin du cours</button><button class="chip" data-m="pause" style="border-style:dashed">⏸ Fin de la 1re période (facultatif)</button></div>
+  <label>Moment</label><div class="chips" id="chipsMom"><button class="chip" data-m="fin">🏁 Gen suis où à la fin du cours ?</button><button class="chip" data-m="pause" style="border-style:dashed">⏸ Gen suis où après la 1re période ? (facultatif)</button></div>
   <div class="hint" id="momHint" style="font-weight:700"></div>
   <label id="lblPhoto">Photo (facultatif)</label>
   <div class="row"><button class="btn blue" id="btnPhoto">📷 Photo de la dernière diapo</button></div>
@@ -386,14 +386,14 @@ function drawChips(){
 let MOM='fin';
 function drawMom(){document.querySelectorAll('#chipsMom [data-m]').forEach(b=>{b.classList.toggle('sel',b.dataset.m===MOM);b.onclick=()=>{MOM=b.dataset.m;drawMom()}});
   const P=MOM==='pause',ap=!P&&sel.classe&&dayPause(sel.classe,new Date());
-  $('#momHint').textContent=P?'⏸ Vous notez la fin de la 1re période : la photo, la diapo et le texte concernent uniquement la 1re période. À la fin du cours, vous ferez une seconde note.':(ap?'🏁 La fin de la 1re période est déjà notée : cette note concerne la 2e période, jusqu’à la fin du cours.':'');
-  $('#addTitle').textContent=P?'⏸ Où en êtes-vous à la fin de la 1re période ?':'Où en êtes-vous ?';
+  $('#momHint').textContent=P?'⏸ Vous notez où vous en êtes après la 1re période : la photo, la diapo et le texte concernent uniquement la 1re période. À la fin du cours, vous ferez une seconde note.':(ap?'🏁 Votre note après la 1re période est déjà enregistrée : cette note concerne la 2e période, jusqu’à la fin du cours.':'');
+  $('#addTitle').textContent=P?'⏸ Gen suis où après la 1re période ?':'🏁 Gen suis où à la fin du cours ?';
   $('#lblPhoto').textContent=P?'Photo de la dernière diapo de la 1re période (facultatif)':'Photo (facultatif)';
   $('#btnPhoto').textContent=P?'📷 Photo de la dernière diapo de la 1re période':(ap?'📷 Photo de la dernière diapo du cours':'📷 Photo de la dernière diapo');
   $('#lblDiapo').textContent=P?'Dernière diapo ou étape de la 1re période':'Dernière diapo ou étape';
   $('#lblNote').textContent=P?'Ce que nous avons fait pendant la 1re période':(ap?'Ce que nous avons fait pendant la 2e période':'Ce que nous avons fait');
   {const pn=$('#sheetAdd .panel');if(pn)pn.style.boxShadow=P?'inset 0 0 0 3px #6c7ae0':''}
-  $('#save').textContent=(EDITID?'Enregistrer la modification':(MOM==='pause'?'Enregistrer la fin de la 1re période':'Enregistrer'))}
+  $('#save').textContent=(EDITID?'Enregistrer la modification':(MOM==='pause'?'Enregistrer : après la 1re période':'Enregistrer'))}
 function guessMom(cl){return 'fin';const t=(CFG&&CFG.horaire&&CFG.horaire[new Date().getDay()])||[];const n=nowM();
   for(const [c,a,b] of t){if(c!==cl)continue;const A=mins(a),B=mins(b);if(B-A>60&&n>=A+30&&n<B-15&&!dayPause(cl,new Date()))return 'pause'}return 'fin'}
 function updDocBox(){const d=docFor($('#cours').value);$('#docBox').style.display=d?'':'none';$('#docRes').innerHTML='';$('#docQ').value=''}

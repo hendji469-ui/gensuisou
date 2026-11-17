@@ -128,11 +128,11 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
 
 <div class="sheet" id="sheetAdd"><div class="panel">
   <button class="x" data-close>×</button>
-  <h3>Où en êtes-vous ?</h3>
+  <h3 id="addTitle">Où en êtes-vous ?</h3>
   <label>Classe</label><div class="chips" id="chipsClasse"></div>
   <label>Moment</label><div class="chips" id="chipsMom"><button class="chip" data-m="pause">⏸ Pause, après la 1re période</button><button class="chip" data-m="fin">🏁 Fin du cours</button></div>
-  <div class="hint" id="momHint"></div>
-  <label>Photo (facultatif)</label>
+  <div class="hint" id="momHint" style="font-weight:700"></div>
+  <label id="lblPhoto">Photo (facultatif)</label>
   <div class="row"><button class="btn blue" id="btnPhoto">📷 Photo de la dernière diapo</button></div>
   <input type="file" id="photo" accept="image/*" class="vh" tabindex="-1" aria-hidden="true">
   <img id="prev" class="prev" alt="">
@@ -140,7 +140,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   <div class="hint" id="readHint"></div>
   <label>Cours ou leçon</label><div class="chips" id="chipsCours"></div>
   <input id="cours" placeholder="déjà rempli : modifiez seulement si besoin" style="margin-top:8px" autocomplete="off">
-  <label>Dernière diapo ou étape</label>
+  <label id="lblDiapo">Dernière diapo ou étape</label>
   <input id="diapo" placeholder="ex. 74, ou « exercice 3 »" autocomplete="off">
   <div id="docBox" style="display:none;margin-top:8px">
     <input id="docQ" placeholder="🎙️ Dites où vous vous êtes arrêté (ex. « l’office ne pouvait pas notifier »)" autocomplete="off">
@@ -149,7 +149,7 @@ button:active,.slot:active,.mini:active,.day:active{transform:scale(.96);transit
   </div>
   <label>Date du cours</label>
   <input id="dcours" type="date">
-  <label>Ce que nous avons fait</label>
+  <label id="lblNote">Ce que nous avons fait</label>
   <textarea id="note" placeholder="Écrivez, ou touchez le micro du clavier pour dicter."></textarea>
   <div class="row" style="margin-top:8px">
     <button class="btn sm" id="btnDict">🎙️ Parler : le texte s’écrit</button>
@@ -385,7 +385,14 @@ function drawChips(){
 }
 let MOM='fin';
 function drawMom(){document.querySelectorAll('#chipsMom [data-m]').forEach(b=>{b.classList.toggle('sel',b.dataset.m===MOM);b.onclick=()=>{MOM=b.dataset.m;drawMom()}});
-  $('#momHint').textContent=MOM==='pause'?'Repère intermédiaire : il s’affiche à côté du cours, sans remplacer la note de fin de cours.':'';
+  const P=MOM==='pause',ap=!P&&sel.classe&&dayPause(sel.classe,new Date());
+  $('#momHint').textContent=P?'⏸ Vous notez la pause : la photo, la diapo et le texte concernent uniquement la 1re période. À la fin du cours, vous ferez une seconde note.':(ap?'🏁 La pause est déjà notée : cette note concerne la 2e période, jusqu’à la fin du cours.':'');
+  $('#addTitle').textContent=P?'⏸ Pause : où en êtes-vous après la 1re période ?':'Où en êtes-vous ?';
+  $('#lblPhoto').textContent=P?'Photo de la diapo à la pause (facultatif)':'Photo (facultatif)';
+  $('#btnPhoto').textContent=P?'📷 Photo de la diapo atteinte à la pause':(ap?'📷 Photo de la dernière diapo du cours':'📷 Photo de la dernière diapo');
+  $('#lblDiapo').textContent=P?'Diapo ou étape atteinte à la fin de la 1re période':'Dernière diapo ou étape';
+  $('#lblNote').textContent=P?'Ce que nous avons fait pendant la 1re période':(ap?'Ce que nous avons fait depuis la pause':'Ce que nous avons fait');
+  {const pn=$('#sheetAdd .panel');if(pn)pn.style.boxShadow=P?'inset 0 0 0 3px #6c7ae0':''}
   $('#save').textContent=(EDITID?'Enregistrer la modification':(MOM==='pause'?'Enregistrer la pause':'Enregistrer'))}
 function guessMom(cl){const t=(CFG&&CFG.horaire&&CFG.horaire[new Date().getDay()])||[];const n=nowM();
   for(const [c,a,b] of t){if(c!==cl)continue;const A=mins(a),B=mins(b);if(B-A>60&&n>=A+30&&n<B-15&&!dayPause(cl,new Date()))return 'pause'}return 'fin'}
